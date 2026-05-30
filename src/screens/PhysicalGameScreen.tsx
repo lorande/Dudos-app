@@ -26,6 +26,7 @@ export default function PhysicalGameScreen({ navigation }: Props) {
     if (game.phase === 'game_over') { navigation.replace('OnlineResult'); return; }
     if (game.phase === 'round_end') setShowReveal(true);
     else setShowReveal(false);
+    if (game.phase !== 'bidding') setShowLoser(false); // evita emitir resolve em fase errada
   }, [game?.phase]);
 
   if (!game) return null;

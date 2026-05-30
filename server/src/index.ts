@@ -57,7 +57,8 @@ io.on('connection', (socket) => {
     const room = approveJoin(socket.id, socketId);
     if (!room) return;
     const s = io.sockets.sockets.get(socketId);
-    if (s) s.join(room.code);
+    if (!s) { removeSocket(socketId); return; } // jogador desconectou antes da aprovação
+    s.join(room.code);
     io.to(socketId).emit('room:join_result', { approved: true });
     io.to(room.code).emit('room:joined', { code: room.code, players: getLobbyPlayers(room.code) });
     io.to(room.hostId).emit('room:pending_update', { pending: getPending(room.code) });

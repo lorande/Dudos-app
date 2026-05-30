@@ -75,6 +75,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   connected: false,
 
   connect: () => {
+    if (get().connected) return; // evita listeners duplicados em re-montagens
     const socket = getSocket();
     set({ mySocketId: socket.id, connected: socket.connected });
 
