@@ -29,7 +29,9 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
   useEffect(() => {
     connect();
     loadTemplates();
-    return () => { disconnect(); };
+    // Não desconectar no unmount: ao iniciar a partida o lobby desmonta e
+    // navega para a tela de jogo, que precisa do mesmo socket vivo.
+    // A desconexão é feita explicitamente nos botões "Sair"/"Cancelar".
   }, []);
 
   useEffect(() => {
