@@ -60,9 +60,9 @@ describe('minOpeningQuantity', () => {
     expect(minOpeningQuantity(4, 6)).toBe(6);
     expect(minOpeningQuantity(4, 1)).toBe(3);
   });
-  it('palafico = 2N-1', () => {
-    expect(minOpeningQuantity(4, 6, true)).toBe(7);
-    expect(minOpeningQuantity(3, 5, true)).toBe(5);
+  it('palafico = N-1', () => {
+    expect(minOpeningQuantity(4, 6, true)).toBe(3);
+    expect(minOpeningQuantity(3, 5, true)).toBe(2);
   });
 });
 

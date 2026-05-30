@@ -218,7 +218,7 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
 }
 
 export function minOpeningQuantity(activeCount: number, face: Face, palificoActive = false): number {
-  if (palificoActive) return 2 * activeCount - 1;
+  if (palificoActive) return activeCount - 1;
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
