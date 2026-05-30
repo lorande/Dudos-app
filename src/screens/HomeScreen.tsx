@@ -15,6 +15,11 @@ export default function HomeScreen({ navigation }: Props) {
 
       <View style={styles.buttons}>
         <MenuButton
+          label="Modo Físico"
+          emoji="🎲"
+          onPress={() => navigation.navigate('RuleConfig', { mode: 'physical' })}
+        />
+        <MenuButton
           label="Jogar Online"
           emoji="🌐"
           onPress={() => navigation.navigate('OnlineLobby')}
@@ -23,11 +28,6 @@ export default function HomeScreen({ navigation }: Props) {
           label="Jogar com Bots"
           emoji="🤖"
           onPress={() => navigation.navigate('RuleConfig', { mode: 'local' })}
-        />
-        <MenuButton
-          label="Modo Físico"
-          emoji="🎲"
-          onPress={() => navigation.navigate('RuleConfig', { mode: 'physical' })}
         />
         <MenuButton
           label="Tutorial"
