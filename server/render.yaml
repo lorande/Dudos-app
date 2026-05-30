@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: dudos-server
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3001
+    autoDeploy: true

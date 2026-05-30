@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Dudos",
+    "slug": "dudos-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a0a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dudos.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Dudos não usa o microfone.",
+        "UIBackgroundModes": []
+      }
+    },
+    "android": {
+      "package": "com.dudos.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#1a0a2e",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-av"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "PREENCHER-APÓS-eas-build-configure"
+      }
+    }
+  }
+}
