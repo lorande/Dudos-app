@@ -83,6 +83,19 @@ export default function PhysicalGameScreen({ navigation }: Props) {
           </View>
         )}
 
+        {/* Dados na MESA (públicos a todos) */}
+        {activePlayers.some((p) => p.tableDice.length > 0) && (
+          <View style={styles.mesaPanel}>
+            <Text style={styles.mesaPanelTitle}>🃏 Dados na Mesa</Text>
+            {activePlayers.filter((p) => p.tableDice.length > 0).map((p) => (
+              <View key={p.id} style={styles.mesaPanelRow}>
+                <Text style={styles.mesaPanelName}>{p.name}</Text>
+                <Text style={styles.mesaPanelDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Ações: qualquer jogador pode Dudar; Mesa disponível */}
         {game.phase === 'bidding' && !myPlayer?.isEliminated && (
           <View style={styles.actions}>
@@ -154,6 +167,11 @@ const styles = StyleSheet.create({
   die: { fontSize: 40 },
   palificoBanner: { backgroundColor: '#3b0764', borderRadius: 8, padding: 10, alignItems: 'center' },
   palificoText: { color: '#c084fc', fontSize: 13, fontWeight: '700' },
+  mesaPanel: { backgroundColor: '#1e1040', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#c084fc' },
+  mesaPanelTitle: { color: '#c084fc', fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  mesaPanelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
+  mesaPanelName: { color: '#fff', fontSize: 14 },
+  mesaPanelDice: { fontSize: 32 },
   actions: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, gap: 12 },
   actionLabel: { color: '#aaa', fontSize: 13, textAlign: 'center' },
   dudoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 18, alignItems: 'center' },

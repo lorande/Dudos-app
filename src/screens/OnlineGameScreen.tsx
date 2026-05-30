@@ -117,6 +117,19 @@ export default function OnlineGameScreen({ navigation }: Props) {
           </View>
         )}
 
+        {/* Dados na MESA (públicos a todos) */}
+        {activePlayers.some((p) => p.tableDice.length > 0) && (
+          <View style={styles.mesaPanel}>
+            <Text style={styles.mesaPanelTitle}>🃏 Dados na Mesa</Text>
+            {activePlayers.filter((p) => p.tableDice.length > 0).map((p) => (
+              <View key={p.id} style={styles.mesaPanelRow}>
+                <Text style={styles.mesaPanelName}>{p.name}</Text>
+                <Text style={styles.mesaPanelDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Aguardando */}
         {!isMyTurn && game.phase === 'bidding' && (
           <View style={styles.waitBanner}>
@@ -247,6 +260,11 @@ const styles = StyleSheet.create({
   currentBidNone: { color: '#555', fontSize: 18, marginTop: 4 },
   palificoBanner: { backgroundColor: '#3b0764', borderRadius: 8, padding: 10, alignItems: 'center' },
   palificoText: { color: '#c084fc', fontSize: 13, fontWeight: '700' },
+  mesaPanel: { backgroundColor: '#1e1040', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#c084fc' },
+  mesaPanelTitle: { color: '#c084fc', fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  mesaPanelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
+  mesaPanelName: { color: '#fff', fontSize: 14 },
+  mesaPanelDice: { fontSize: 32 },
   waitBanner: { backgroundColor: '#1e293b', borderRadius: 8, padding: 14, alignItems: 'center' },
   waitText: { color: '#94a3b8', fontSize: 16 },
   eliminatedBanner: { backgroundColor: '#450a0a', borderRadius: 8, padding: 14, alignItems: 'center' },

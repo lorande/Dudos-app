@@ -171,9 +171,14 @@ export function applyDudoPasso(state: ServerGameState, challengerId: string): Se
 export function applyMesa(state: ServerGameState, playerId: string, indexesToShow: number[]): ServerGameState {
   if (state.phase !== 'bidding') throw new Error('Fora de fase');
   if (!state.rules.mesaEnabled) throw new Error('Mesa desabilitada');
-  const idx = state.currentPlayerIndex;
+  // No modo físico não há turnos de aposta (são em voz alta), então qualquer
+  // jogador ativo pode usar a Mesa. No online, só na sua vez.
+  if (state.mode !== 'physical' && state.players[state.currentPlayerIndex].id !== playerId) {
+    throw new Error('Não é sua vez');
+  }
+  const idx = state.players.findIndex((p) => p.id === playerId);
+  if (idx < 0 || state.players[idx].isEliminated) throw new Error('Jogador inválido');
   const player = state.players[idx];
-  if (player.id !== playerId) throw new Error('Não é sua vez');
   if (player.usedMesa) throw new Error('Mesa já usada');
   const shown: Face[] = [];
   const remaining: Face[] = [];
