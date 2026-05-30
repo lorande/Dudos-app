@@ -51,3 +51,33 @@ describe('isBidHigher (bico)', () => {
     expect(isBidHigher({ quantity: 3, face: 1 }, { quantity: 3, face: 1 })).toBe(false);
   });
 });
+
+import { minOpeningQuantity, bid, initGame as init2 } from '../engine';
+import { DEFAULT_RULES as R2 } from '../types';
+
+describe('minOpeningQuantity', () => {
+  it('normal = 2N-2, bico = N-1', () => {
+    expect(minOpeningQuantity(4, 6)).toBe(6);
+    expect(minOpeningQuantity(4, 1)).toBe(3);
+  });
+});
+
+describe('bid abertura', () => {
+  const make = () =>
+    init2(R2, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+      { id: 'c', name: 'C', isBot: false },
+      { id: 'd', name: 'D', isBot: false },
+    ]);
+
+  it('rejeita abertura abaixo de 2N-2', () => {
+    const g = make();
+    expect(() => bid(g, 'a', { quantity: 5, face: 3 })).toThrow();
+  });
+  it('aceita abertura em 2N-2', () => {
+    const g = make();
+    const g2 = bid(g, 'a', { quantity: 6, face: 3 });
+    expect(g2.currentBid).toEqual({ quantity: 6, face: 3 });
+  });
+});

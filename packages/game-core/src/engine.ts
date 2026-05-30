@@ -81,7 +81,12 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
   const player = state.players[state.currentPlayerIndex];
   if (player.id !== playerId) throw new Error('Não é a vez deste jogador');
 
-  if (!isBidHigher(state.currentBid, newBid)) {
+  if (state.currentBid === null) {
+    const activeCount = state.players.filter((p) => !p.isEliminated).length;
+    if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face)) {
+      throw new Error('Aposta de abertura abaixo do mínimo');
+    }
+  } else if (!isBidHigher(state.currentBid, newBid)) {
     throw new Error('Aposta deve ser maior que a atual');
   }
 
@@ -89,7 +94,12 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
     ...state,
     currentBid: newBid,
     currentPlayerIndex: nextActiveIndex(state, state.currentPlayerIndex),
+    pendingPasso: null,
   };
+}
+
+export function minOpeningQuantity(activeCount: number, face: Face): number {
+  return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
 export function isBidHigher(current: Bid | null, next: Bid): boolean {
