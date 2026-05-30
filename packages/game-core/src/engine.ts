@@ -41,18 +41,23 @@ function isPalificoRound(players: PlayerState[], rules: RuleConfig): boolean {
 
 // ─── Início de Partida ────────────────────────────────────────────────────────
 
-export function initGame(rules: RuleConfig, players: Omit<PlayerState, 'dice' | 'lives' | 'isEliminated'>[]): GameState {
-  const initialDice = rules.punishmentMode === 'dice' ? rules.startingDice : rules.startingDice;
-  const initialLives = rules.startingLives;
+export function initGame(
+  rules: RuleConfig,
+  players: Pick<PlayerState, 'id' | 'name' | 'isBot'>[]
+): GameState {
+  const diceCount = rules.startingDice;
 
   const fullPlayers: PlayerState[] = players.map((p) => ({
-    ...p,
-    dice: rollDice(rules.punishmentMode === 'dice' ? initialDice : rules.startingDice),
-    lives: rules.punishmentMode === 'lives' ? initialLives : 1,
+    id: p.id,
+    name: p.name,
+    isBot: p.isBot,
+    dice: rollDice(diceCount),
+    tableDice: [],
+    lives: rules.punishmentMode === 'lives' ? rules.startingLives : 1,
+    usedPasso: false,
+    usedMesa: false,
     isEliminated: false,
   }));
-
-  const palificoActive = isPalificoRound(fullPlayers, rules);
 
   return {
     rules,
@@ -62,7 +67,8 @@ export function initGame(rules: RuleConfig, players: Omit<PlayerState, 'dice' | 
     phase: 'bidding',
     lastReveal: null,
     winnerId: null,
-    palificoActive,
+    palificoActive: isPalificoRound(fullPlayers, rules),
+    pendingPasso: null,
     roundNumber: 1,
   };
 }
