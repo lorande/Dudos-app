@@ -1,7 +1,7 @@
 import { ServerGameState, RuleConfig } from '../game/types';
 import {
   initServerGame, applyBid, applyDudo, applyNextRound,
-  applyPasso, applyDudoPasso, applyMesa, applyManualDudo,
+  applyPasso, applyDudoPasso, applyMesa, applyManualDudo, applyReveal,
 } from '../game/engine';
 
 interface RoomMeta {
@@ -162,6 +162,13 @@ export function performManualDudo(socketId: string, loserId: string): ServerGame
   const room = getRoomBySocket(socketId);
   if (!room?.state) throw new Error('Sala não encontrada');
   room.state = applyManualDudo(room.state, loserId);
+  return room.state;
+}
+
+export function performReveal(socketId: string): ServerGameState {
+  const room = getRoomBySocket(socketId);
+  if (!room?.state) throw new Error('Sala não encontrada');
+  room.state = applyReveal(room.state);
   return room.state;
 }
 

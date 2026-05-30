@@ -5,7 +5,7 @@ import cors from 'cors';
 import {
   createRoom, requestJoin, approveJoin, rejectJoin, getPending, startGame,
   performBid, performDudo, performPasso, performDudoPasso, performMesa,
-  performManualDudo, performNextRound, removeSocket, getLobbyPlayers,
+  performManualDudo, performReveal, performNextRound, removeSocket, getLobbyPlayers,
   reconnectToRoom, getRoomBySocket,
 } from './rooms/roomManager';
 import { toPublicState } from './game/engine';
@@ -157,6 +157,16 @@ io.on('connection', (socket) => {
       io.to(state.roomCode).emit('game:state', toPublicState(state));
       const player = state.players.find((p) => p.id === socket.id);
       io.to(socket.id).emit('game:your_dice', player?.dice ?? []);
+    } catch (e: any) {
+      socket.emit('error', e.message);
+    }
+  });
+
+  // ── Revelar contagem (Modo Físico, antes de atribuir o perdedor) ─────────────
+  socket.on('game:reveal_all', () => {
+    try {
+      const state = performReveal(socket.id);
+      io.to(state.roomCode).emit('game:state', toPublicState(state));
     } catch (e: any) {
       socket.emit('error', e.message);
     }

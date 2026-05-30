@@ -26,6 +26,7 @@ export interface PublicGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  revealing: boolean;
   roundNumber: number;
   hostId: string;
   mode: RoomMode;
@@ -57,6 +58,7 @@ interface OnlineGameStore {
   passo: () => void;
   dudoPasso: () => void;
   mesa: (indexes: number[]) => void;
+  revealAll: () => void;
   resolveDudo: (loserId: string) => void;
   nextRound: () => void;
   disconnect: () => void;
@@ -123,6 +125,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   passo: () => getSocket().emit('game:passo'),
   dudoPasso: () => getSocket().emit('game:dudo_passo'),
   mesa: (indexes) => getSocket().emit('game:mesa', { indexes }),
+  revealAll: () => getSocket().emit('game:reveal_all'),
   resolveDudo: (loserId) => getSocket().emit('game:resolve_dudo', { loserId }),
   nextRound: () => getSocket().emit('game:next_round'),
 

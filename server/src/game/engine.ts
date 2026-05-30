@@ -69,14 +69,25 @@ export function initServerGame(
     currentBid: null, currentPlayerIndex: 0, phase: 'bidding',
     lastReveal: null, winnerId: null,
     palificoActive: isPalificoRound(fullPlayers, rules),
-    pendingPasso: null, roundNumber: 1, hostId, mode,
+    pendingPasso: null, revealing: false, roundNumber: 1, hostId, mode,
   };
+}
+
+// Físico: revela a contagem de todos os dados antes de atribuir o perdedor.
+export function applyReveal(state: ServerGameState): ServerGameState {
+  if (state.phase !== 'bidding') throw new Error('Fora de fase');
+  const allDice = state.players.filter((p) => !p.isEliminated).flatMap((p) => [...p.dice, ...p.tableDice]);
+  const reveal: RevealResult = {
+    faceCounts: countFaces(allDice), wildCount: 0, bidFace: WILD,
+    bidQuantity: 0, effectiveCount: 0, bidWasTrue: false, loserIds: [], kind: 'manual',
+  };
+  return { ...state, lastReveal: reveal, revealing: true };
 }
 
 function finishRound(state: ServerGameState, players: ServerPlayer[], reveal: RevealResult): ServerGameState {
   const remaining = players.filter((p) => !p.isEliminated);
   const winnerId = remaining.length === 1 ? remaining[0].id : null;
-  return { ...state, players, phase: winnerId ? 'game_over' : 'round_end', lastReveal: reveal, winnerId, pendingPasso: null };
+  return { ...state, players, phase: winnerId ? 'game_over' : 'round_end', lastReveal: reveal, winnerId, pendingPasso: null, revealing: false };
 }
 
 function applyPenalty(players: ServerPlayer[], result: RevealResult, rules: RuleConfig): ServerPlayer[] {
@@ -204,7 +215,7 @@ export function applyNextRound(state: ServerGameState): ServerGameState {
   const loserId = state.lastReveal?.loserIds[0];
   const loserIdx = loserId ? updatedPlayers.findIndex((p) => p.id === loserId) : 0;
   const startIdx = (loserIdx >= 0 && updatedPlayers[loserIdx]?.isEliminated) ? nextActiveIndex(updatedPlayers, loserIdx) : Math.max(0, loserIdx);
-  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, roundNumber: state.roundNumber + 1 };
+  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, revealing: false, roundNumber: state.roundNumber + 1 };
 }
 
 export function toPublicState(state: ServerGameState): PublicGameState {
@@ -216,6 +227,6 @@ export function toPublicState(state: ServerGameState): PublicGameState {
     roomCode: state.roomCode, rules: state.rules, players,
     currentBid: state.currentBid, currentPlayerId: state.players[state.currentPlayerIndex]?.id ?? null,
     phase: state.phase, lastReveal: state.lastReveal, winnerId: state.winnerId,
-    palificoActive: state.palificoActive, pendingPasso: state.pendingPasso, roundNumber: state.roundNumber, hostId: state.hostId, mode: state.mode,
+    palificoActive: state.palificoActive, pendingPasso: state.pendingPasso, revealing: state.revealing, roundNumber: state.roundNumber, hostId: state.hostId, mode: state.mode,
   };
 }

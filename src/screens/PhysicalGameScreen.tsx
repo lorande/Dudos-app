@@ -16,18 +16,16 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PhysicalGame'>;
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function PhysicalGameScreen({ navigation }: Props) {
-  const { game, mySocketId, myDice, mesa, resolveDudo, nextRound, disconnect } = useOnlineGameStore();
+  const { game, mySocketId, myDice, mesa, revealAll, resolveDudo, nextRound, disconnect } = useOnlineGameStore();
 
   const [showReveal, setShowReveal] = useState(false);
   const [showMesa, setShowMesa] = useState(false);
-  const [showLoser, setShowLoser] = useState(false);
 
   useEffect(() => {
     if (!game) return;
     if (game.phase === 'game_over') { navigation.replace('OnlineResult'); return; }
     if (game.phase === 'round_end') setShowReveal(true);
     else setShowReveal(false);
-    if (game.phase !== 'bidding') setShowLoser(false); // evita emitir resolve em fase errada
   }, [game?.phase]);
 
   if (!game) return null;
@@ -96,10 +94,10 @@ export default function PhysicalGameScreen({ navigation }: Props) {
         )}
 
         {/* Ações: qualquer jogador pode Dudar; Mesa disponível */}
-        {game.phase === 'bidding' && !myPlayer?.isEliminated && (
+        {game.phase === 'bidding' && !game.revealing && !myPlayer?.isEliminated && (
           <View style={styles.actions}>
             <Text style={styles.actionLabel}>As apostas são faladas em voz alta. Ao desafiar, toque em Dudar.</Text>
-            <TouchableOpacity style={styles.dudoBtn} onPress={() => setShowLoser(true)}>
+            <TouchableOpacity style={styles.dudoBtn} onPress={() => revealAll()}>
               <Text style={styles.dudoBtnText}>DUDAR! 🎯</Text>
             </TouchableOpacity>
             {game.rules.mesaEnabled && !myPlayer?.usedMesa && (
@@ -121,13 +119,13 @@ export default function PhysicalGameScreen({ navigation }: Props) {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Selecionar perdedor (sem tally — clientes não veem dados alheios antes) */}
+      {/* Após Dudar: contagem revelada a todos + atribuição do perdedor */}
       <LoserSelectOverlay
-        visible={showLoser}
-        faceCounts={[]}
+        visible={!!game.revealing}
+        faceCounts={game.lastReveal?.faceCounts ?? []}
         players={activePlayers.map((p) => ({ id: p.id, name: p.name }))}
-        onCancel={() => setShowLoser(false)}
-        onSelect={(loserId) => { setShowLoser(false); resolveDudo(loserId); }}
+        onCancel={() => { /* só sai resolvendo; cancelar não reverte o servidor */ }}
+        onSelect={(loserId) => resolveDudo(loserId)}
       />
 
       {/* Resultado: contagem das 6 faces */}

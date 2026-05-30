@@ -63,6 +63,7 @@ export interface ServerGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  revealing: boolean; // físico: contagem revelada, aguardando atribuição do perdedor
   roundNumber: number;
   hostId: string;
   mode: 'online' | 'physical';
@@ -78,6 +79,7 @@ export interface ClientToServerEvents {
   'room:reconnect': (payload: { code: string; name: string }) => void;
   'game:bid': (payload: { quantity: number; face: Face }) => void;
   'game:dudo': () => void;
+  'game:reveal_all': () => void;
   'game:passo': () => void;
   'game:dudo_passo': () => void;
   'game:mesa': (payload: { indexes: number[] }) => void;
@@ -121,6 +123,7 @@ export interface PublicGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  revealing: boolean; // físico: contagem revelada, aguardando atribuição do perdedor
   roundNumber: number;
   hostId: string;
   mode: 'online' | 'physical';
