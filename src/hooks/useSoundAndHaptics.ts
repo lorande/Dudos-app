@@ -1,44 +1,51 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
-// Sons gerados via frequência (sem arquivos externos) usando expo-av
-// Para uma versão com assets reais, substitua loadSound() por Audio.Sound.createAsync(require(...))
+// Efeitos sonoros via expo-audio (substitui o antigo expo-av).
+// Para versão offline, troque as URLs por require('../../assets/sons/xxx.mp3').
 
 type SoundType = 'roll' | 'bid' | 'dudo' | 'win' | 'lose' | 'tick';
 
-// Cache de sons carregados
-const soundCache: Partial<Record<SoundType, Audio.Sound>> = {};
-
-// URLs de sons curtos em domínio público (freesound.org CC0)
 const SOUND_URLS: Record<SoundType, string> = {
-  roll:  'https://cdn.freesound.org/previews/441/441495_4397622-lq.mp3',  // dice roll
-  bid:   'https://cdn.freesound.org/previews/256/256113_3263906-lq.mp3',  // click
-  dudo:  'https://cdn.freesound.org/previews/242/242501_4284968-lq.mp3',  // alert
-  win:   'https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3',  // fanfare
-  lose:  'https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3',  // fail
-  tick:  'https://cdn.freesound.org/previews/256/256113_3263906-lq.mp3',  // tick
+  roll: 'https://cdn.freesound.org/previews/441/441495_4397622-lq.mp3',
+  bid:  'https://cdn.freesound.org/previews/256/256113_3263906-lq.mp3',
+  dudo: 'https://cdn.freesound.org/previews/242/242501_4284968-lq.mp3',
+  win:  'https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3',
+  lose: 'https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3',
+  tick: 'https://cdn.freesound.org/previews/256/256113_3263906-lq.mp3',
 };
 
-async function loadSound(type: SoundType): Promise<Audio.Sound | null> {
-  if (soundCache[type]) return soundCache[type]!;
+// Configura o áudio uma única vez (toca mesmo no modo silencioso do iOS).
+let audioModeSet = false;
+function ensureAudioMode() {
+  if (audioModeSet) return;
+  audioModeSet = true;
+  setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+}
+
+// Cache de players carregados (lazy).
+const playerCache: Partial<Record<SoundType, AudioPlayer>> = {};
+
+function getPlayer(type: SoundType): AudioPlayer | null {
   try {
-    await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-    const { sound } = await Audio.Sound.createAsync({ uri: SOUND_URLS[type] });
-    soundCache[type] = sound;
-    return sound;
+    if (!playerCache[type]) {
+      playerCache[type] = createAudioPlayer({ uri: SOUND_URLS[type] });
+    }
+    return playerCache[type]!;
   } catch {
     return null;
   }
 }
 
 export function useSoundAndHaptics() {
-  const play = useCallback(async (type: SoundType) => {
+  const play = useCallback((type: SoundType) => {
     try {
-      const sound = await loadSound(type);
-      if (!sound) return;
-      await sound.setPositionAsync(0);
-      await sound.playAsync();
+      ensureAudioMode();
+      const player = getPlayer(type);
+      if (!player) return;
+      player.seekTo(0);
+      player.play();
     } catch {}
   }, []);
 

@@ -30,7 +30,7 @@
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
-      "expo-av"
+      "expo-audio"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
