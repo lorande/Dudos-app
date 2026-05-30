@@ -166,3 +166,36 @@ describe('passo / dudoPasso', () => {
     expect(after.lastReveal?.loserIds).toContain('b');
   });
 });
+
+import { mesa, passo as passo5, initGame as init5 } from '../engine';
+import { RuleConfig as RC5 } from '../types';
+
+const RULES5: RC5 = {
+  punishmentMode: 'dice', startingLives: 3, startingDice: 5,
+  wildEnabled: true, palificoEnabled: false, passoEnabled: true,
+  mesaEnabled: true, turnTimerSeconds: null, revealBetweenRounds: false,
+};
+
+describe('mesa', () => {
+  it('move dados escolhidos para tableDice e re-sorteia o restante', () => {
+    let g = init5(RULES5, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    g = { ...g, players: [{ ...g.players[0], dice: [6, 6, 2, 3, 4] }, g.players[1]] };
+    const after = mesa(g, 'a', [0, 1]); // mostra os dois seis
+    expect(after.players[0].tableDice).toEqual([6, 6]);
+    expect(after.players[0].dice).toHaveLength(3); // restante re-sorteado
+    expect(after.players[0].usedMesa).toBe(true);
+    expect(after.currentPlayerIndex).toBe(0); // ainda é a vez de A (deve apostar)
+  });
+  it('Mesa bloqueia Passo na mesma rodada', () => {
+    let g = init5(RULES5, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]] };
+    g = mesa(g, 'a', []); // usa Mesa sem mostrar nada (re-sorteia tudo)
+    expect(() => passo5(g, 'a')).toThrow();
+  });
+});

@@ -101,6 +101,32 @@ export function dudoPasso(state: GameState, challengerId: string): GameState {
   };
 }
 
+export function mesa(state: GameState, playerId: string, indexesToShow: number[]): GameState {
+  if (state.phase !== 'bidding') throw new Error('Fora de fase');
+  if (!state.rules.mesaEnabled) throw new Error('Mesa desabilitada');
+  const idx = state.currentPlayerIndex;
+  const player = state.players[idx];
+  if (player.id !== playerId) throw new Error('Não é a vez deste jogador');
+  if (player.usedMesa) throw new Error('Mesa já usada nesta rodada');
+
+  const shown: Face[] = [];
+  const remaining: Face[] = [];
+  player.dice.forEach((d, i) => {
+    if (indexesToShow.includes(i)) shown.push(d);
+    else remaining.push(d);
+  });
+
+  const updated: PlayerState = {
+    ...player,
+    tableDice: [...player.tableDice, ...shown],
+    dice: rollDice(remaining.length),
+    usedMesa: true,
+  };
+
+  const players = state.players.map((p, i) => (i === idx ? updated : p));
+  return { ...state, players };
+}
+
 // ─── Início de Partida ────────────────────────────────────────────────────────
 
 export function initGame(
