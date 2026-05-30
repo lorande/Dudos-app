@@ -1,13 +1,16 @@
 import { ServerGameState, RuleConfig } from '../game/types';
 import {
   initServerGame, applyBid, applyDudo, applyNextRound,
+  applyPasso, applyDudoPasso, applyMesa, applyManualDudo,
 } from '../game/engine';
 
 interface RoomMeta {
   code: string;
   hostId: string;
-  playerNames: Map<string, string>; // socketId → name
-  state: ServerGameState | null;    // null = lobby
+  mode: 'online' | 'physical';
+  playerNames: Map<string, string>;  // aprovados (na sala)
+  pending: Map<string, string>;       // aguardando aprovação
+  state: ServerGameState | null;      // null = lobby
   phase: 'lobby' | 'playing';
   rules: RuleConfig;
 }
@@ -25,21 +28,45 @@ function generateCode(): string {
   return code;
 }
 
-export function createRoom(socketId: string, name: string, rules: RuleConfig): string {
+export function createRoom(socketId: string, name: string, rules: RuleConfig, mode: 'online' | 'physical'): string {
   const code = generateCode();
   const playerNames = new Map<string, string>();
   playerNames.set(socketId, name);
-  rooms.set(code, { code, hostId: socketId, playerNames, state: null, phase: 'lobby', rules });
+  rooms.set(code, { code, hostId: socketId, mode, playerNames, pending: new Map(), state: null, phase: 'lobby', rules });
   socketRoomMap.set(socketId, code);
   return code;
 }
 
-export function joinRoom(socketId: string, code: string, name: string): RoomMeta | null {
+export function requestJoin(socketId: string, code: string, name: string): RoomMeta | null {
   const room = rooms.get(code);
   if (!room || room.phase !== 'lobby') return null;
-  room.playerNames.set(socketId, name);
+  room.pending.set(socketId, name);
   socketRoomMap.set(socketId, code);
   return room;
+}
+
+export function approveJoin(hostId: string, socketId: string): RoomMeta | null {
+  const room = getRoomBySocket(hostId);
+  if (!room || room.hostId !== hostId) return null;
+  const name = room.pending.get(socketId);
+  if (name === undefined) return null;
+  room.pending.delete(socketId);
+  room.playerNames.set(socketId, name);
+  return room;
+}
+
+export function rejectJoin(hostId: string, socketId: string): RoomMeta | null {
+  const room = getRoomBySocket(hostId);
+  if (!room || room.hostId !== hostId) return null;
+  room.pending.delete(socketId);
+  socketRoomMap.delete(socketId);
+  return room;
+}
+
+export function getPending(code: string): { id: string; name: string }[] {
+  const room = rooms.get(code);
+  if (!room) return [];
+  return [...room.pending.entries()].map(([id, name]) => ({ id, name }));
 }
 
 export function reconnectToRoom(socketId: string, code: string, name: string): RoomMeta | null {
@@ -69,7 +96,7 @@ export function startGame(code: string): ServerGameState | null {
   if (!room || room.phase !== 'lobby') return null;
   const players = [...room.playerNames.entries()].map(([id, name]) => ({ id, name }));
   if (players.length < 2) return null;
-  const state = initServerGame(room.rules, players, code, room.hostId);
+  const state = initServerGame(room.rules, players, code, room.hostId, room.mode);
   room.state = state;
   room.phase = 'playing';
   return state;
@@ -110,13 +137,42 @@ export function performNextRound(socketId: string): ServerGameState {
   return room.state;
 }
 
+export function performPasso(socketId: string): ServerGameState {
+  const room = getRoomBySocket(socketId);
+  if (!room?.state) throw new Error('Sala não encontrada');
+  room.state = applyPasso(room.state, socketId);
+  return room.state;
+}
+
+export function performDudoPasso(socketId: string): ServerGameState {
+  const room = getRoomBySocket(socketId);
+  if (!room?.state) throw new Error('Sala não encontrada');
+  room.state = applyDudoPasso(room.state, socketId);
+  return room.state;
+}
+
+export function performMesa(socketId: string, indexes: number[]): ServerGameState {
+  const room = getRoomBySocket(socketId);
+  if (!room?.state) throw new Error('Sala não encontrada');
+  room.state = applyMesa(room.state, socketId, indexes);
+  return room.state;
+}
+
+export function performManualDudo(socketId: string, loserId: string): ServerGameState {
+  const room = getRoomBySocket(socketId);
+  if (!room?.state) throw new Error('Sala não encontrada');
+  room.state = applyManualDudo(room.state, loserId);
+  return room.state;
+}
+
 export function removeSocket(socketId: string): { room: RoomMeta; name: string } | null {
   const code = socketRoomMap.get(socketId);
   if (!code) return null;
   const room = rooms.get(code);
   if (!room) return null;
-  const name = room.playerNames.get(socketId) ?? 'Jogador';
+  const name = room.playerNames.get(socketId) ?? room.pending.get(socketId) ?? 'Jogador';
   socketRoomMap.delete(socketId);
+  room.pending.delete(socketId);
   if (room.phase === 'lobby') {
     room.playerNames.delete(socketId);
     if (room.playerNames.size === 0) rooms.delete(code);

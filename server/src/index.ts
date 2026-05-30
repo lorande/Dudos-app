@@ -3,9 +3,10 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import {
-  createRoom, joinRoom, startGame, performBid, performDudo,
-  performNextRound, removeSocket, getLobbyPlayers, reconnectToRoom,
-  getRoomByCode, getRoomBySocket,
+  createRoom, requestJoin, approveJoin, rejectJoin, getPending, startGame,
+  performBid, performDudo, performPasso, performDudoPasso, performMesa,
+  performManualDudo, performNextRound, removeSocket, getLobbyPlayers,
+  reconnectToRoom, getRoomBySocket,
 } from './rooms/roomManager';
 import { toPublicState } from './game/engine';
 import { ClientToServerEvents, ServerToClientEvents, Face } from './game/types';
@@ -27,30 +28,47 @@ io.on('connection', (socket) => {
   console.log(`[connect] ${socket.id}`);
 
   // ── Criar sala ──────────────────────────────────────────────────────────────
-  socket.on('room:create', ({ name, rules }) => {
+  socket.on('room:create', ({ name, rules, mode }) => {
     try {
-      const code = createRoom(socket.id, name, rules);
+      const code = createRoom(socket.id, name, rules, mode);
       socket.join(code);
       socket.emit('room:created', { code });
       socket.emit('room:joined', { code, players: getLobbyPlayers(code) });
-      console.log(`[room:create] ${name} criou sala ${code}`);
+      console.log(`[room:create] ${name} criou sala ${code} (${mode})`);
     } catch (e: any) {
       socket.emit('error', e.message);
     }
   });
 
-  // ── Entrar na sala ──────────────────────────────────────────────────────────
-  socket.on('room:join', ({ code, name }) => {
+  // ── Pedir entrada (vai para fila de aprovação) ───────────────────────────────
+  socket.on('room:request_join', ({ code, name }) => {
     try {
-      const room = joinRoom(socket.id, code, name);
+      const room = requestJoin(socket.id, code, name);
       if (!room) { socket.emit('error', 'Sala não encontrada ou já iniciada'); return; }
-      socket.join(code);
-      socket.emit('room:joined', { code, players: getLobbyPlayers(code) });
-      socket.to(code).emit('room:player_joined', { id: socket.id, name });
-      console.log(`[room:join] ${name} entrou em ${code}`);
+      io.to(room.hostId).emit('room:pending_update', { pending: getPending(code) });
+      console.log(`[room:request_join] ${name} pediu entrada em ${code}`);
     } catch (e: any) {
       socket.emit('error', e.message);
     }
+  });
+
+  // ── Aprovar jogador ──────────────────────────────────────────────────────────
+  socket.on('room:approve', ({ socketId }) => {
+    const room = approveJoin(socket.id, socketId);
+    if (!room) return;
+    const s = io.sockets.sockets.get(socketId);
+    if (s) s.join(room.code);
+    io.to(socketId).emit('room:join_result', { approved: true });
+    io.to(room.code).emit('room:joined', { code: room.code, players: getLobbyPlayers(room.code) });
+    io.to(room.hostId).emit('room:pending_update', { pending: getPending(room.code) });
+  });
+
+  // ── Recusar jogador ──────────────────────────────────────────────────────────
+  socket.on('room:reject', ({ socketId }) => {
+    const room = rejectJoin(socket.id, socketId);
+    if (!room) return;
+    io.to(socketId).emit('room:join_result', { approved: false });
+    io.to(room.hostId).emit('room:pending_update', { pending: getPending(room.code) });
   });
 
   // ── Reconexão ───────────────────────────────────────────────────────────────
@@ -106,10 +124,48 @@ io.on('connection', (socket) => {
     try {
       const state = performDudo(socket.id);
       io.to(state.roomCode).emit('game:state', toPublicState(state));
-      // Se nova rodada, envia novos dados privados
-      if (state.phase === 'round_end') {
-        // Dados novos serão enviados após next_round
-      }
+    } catch (e: any) {
+      socket.emit('error', e.message);
+    }
+  });
+
+  // ── Passo ───────────────────────────────────────────────────────────────────
+  socket.on('game:passo', () => {
+    try {
+      const state = performPasso(socket.id);
+      io.to(state.roomCode).emit('game:state', toPublicState(state));
+    } catch (e: any) {
+      socket.emit('error', e.message);
+    }
+  });
+
+  // ── Dudar o Passo ────────────────────────────────────────────────────────────
+  socket.on('game:dudo_passo', () => {
+    try {
+      const state = performDudoPasso(socket.id);
+      io.to(state.roomCode).emit('game:state', toPublicState(state));
+    } catch (e: any) {
+      socket.emit('error', e.message);
+    }
+  });
+
+  // ── Mesa ─────────────────────────────────────────────────────────────────────
+  socket.on('game:mesa', ({ indexes }) => {
+    try {
+      const state = performMesa(socket.id, indexes);
+      io.to(state.roomCode).emit('game:state', toPublicState(state));
+      const player = state.players.find((p) => p.id === socket.id);
+      io.to(socket.id).emit('game:your_dice', player?.dice ?? []);
+    } catch (e: any) {
+      socket.emit('error', e.message);
+    }
+  });
+
+  // ── Resolver Dudo manual (Modo Físico) ──────────────────────────────────────
+  socket.on('game:resolve_dudo', ({ loserId }) => {
+    try {
+      const state = performManualDudo(socket.id, loserId);
+      io.to(state.roomCode).emit('game:state', toPublicState(state));
     } catch (e: any) {
       socket.emit('error', e.message);
     }
@@ -140,6 +196,7 @@ io.on('connection', (socket) => {
     if (result) {
       const { room, name } = result;
       io.to(room.code).emit('room:player_left', { id: socket.id, name });
+      io.to(room.hostId).emit('room:pending_update', { pending: getPending(room.code) });
       console.log(`[disconnect] ${name} saiu de ${room.code}`);
     }
     console.log(`[disconnect] ${socket.id}`);
