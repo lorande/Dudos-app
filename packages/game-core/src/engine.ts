@@ -94,9 +94,21 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
 
 export function isBidHigher(current: Bid | null, next: Bid): boolean {
   if (!current) return true;
-  if (next.quantity > current.quantity) return true;
-  if (next.quantity === current.quantity && next.face > current.face) return true;
-  return false;
+  const curBico = current.face === WILD;
+  const nextBico = next.face === WILD;
+
+  if (!curBico && !nextBico) {
+    if (next.quantity > current.quantity) return true;
+    if (next.quantity === current.quantity && next.face > current.face) return true;
+    return false;
+  }
+  if (!curBico && nextBico) {
+    return next.quantity >= Math.ceil(current.quantity / 2);
+  }
+  if (curBico && !nextBico) {
+    return next.quantity >= 2 * current.quantity + 1;
+  }
+  return next.quantity > current.quantity; // bico -> bico
 }
 
 // ─── Ação: Dudar ─────────────────────────────────────────────────────────────

@@ -22,3 +22,32 @@ describe('initGame', () => {
     expect(g.pendingPasso).toBeNull();
   });
 });
+
+import { isBidHigher } from '../engine';
+
+describe('isBidHigher (bico)', () => {
+  it('primeira aposta é sempre válida', () => {
+    expect(isBidHigher(null, { quantity: 3, face: 4 })).toBe(true);
+  });
+  it('normal -> normal: quantidade maior', () => {
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 2 })).toBe(true);
+  });
+  it('normal -> normal: mesma quantidade, face maior', () => {
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 3, face: 5 })).toBe(true);
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 3, face: 3 })).toBe(false);
+  });
+  it('normal -> bico: precisa de teto(q/2) bicos', () => {
+    // q=5 -> ceil(2.5)=3
+    expect(isBidHigher({ quantity: 5, face: 6 }, { quantity: 3, face: 1 })).toBe(true);
+    expect(isBidHigher({ quantity: 5, face: 6 }, { quantity: 2, face: 1 })).toBe(false);
+  });
+  it('bico -> normal: precisa de 2*Y+1', () => {
+    // Y=3 -> 7
+    expect(isBidHigher({ quantity: 3, face: 1 }, { quantity: 7, face: 2 })).toBe(true);
+    expect(isBidHigher({ quantity: 3, face: 1 }, { quantity: 6, face: 6 })).toBe(false);
+  });
+  it('bico -> bico: mais bicos', () => {
+    expect(isBidHigher({ quantity: 3, face: 1 }, { quantity: 4, face: 1 })).toBe(true);
+    expect(isBidHigher({ quantity: 3, face: 1 }, { quantity: 3, face: 1 })).toBe(false);
+  });
+});
