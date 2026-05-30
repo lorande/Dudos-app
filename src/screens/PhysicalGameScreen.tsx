@@ -33,7 +33,6 @@ export default function PhysicalGameScreen({ navigation }: Props) {
   if (!game) return null;
 
   const myPlayer = game.players.find((p) => p.id === mySocketId);
-  const isHost = game.hostId === mySocketId;
   const activePlayers = game.players.filter((p) => !p.isEliminated);
 
   const revealPlayers = game.players.map((p) => ({
@@ -42,7 +41,7 @@ export default function PhysicalGameScreen({ navigation }: Props) {
 
   function handleNextRound() {
     setShowReveal(false);
-    if (isHost) nextRound();
+    nextRound(); // no físico qualquer jogador pode reiniciar a rodada
   }
 
   return (

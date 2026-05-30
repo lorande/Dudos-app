@@ -177,7 +177,8 @@ io.on('connection', (socket) => {
     try {
       const currentRoom = getRoomBySocket(socket.id);
       if (!currentRoom?.state) return;
-      if (currentRoom.hostId !== socket.id) return; // só host avança rodada
+      // No físico qualquer jogador pode avançar (sem turnos de aposta); no online, só o host.
+      if (currentRoom.state.mode !== 'physical' && currentRoom.hostId !== socket.id) return;
       const state = performNextRound(socket.id);
       io.to(state.roomCode).emit('game:state', toPublicState(state));
       // Envia novos dados privados
