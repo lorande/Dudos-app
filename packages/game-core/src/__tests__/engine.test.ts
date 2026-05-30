@@ -60,6 +60,10 @@ describe('minOpeningQuantity', () => {
     expect(minOpeningQuantity(4, 6)).toBe(6);
     expect(minOpeningQuantity(4, 1)).toBe(3);
   });
+  it('palafico = 2N-1', () => {
+    expect(minOpeningQuantity(4, 6, true)).toBe(7);
+    expect(minOpeningQuantity(3, 5, true)).toBe(5);
+  });
 });
 
 describe('bid abertura', () => {
@@ -79,6 +83,27 @@ describe('bid abertura', () => {
     const g = make();
     const g2 = bid(g, 'a', { quantity: 6, face: 3 });
     expect(g2.currentBid).toEqual({ quantity: 6, face: 3 });
+  });
+});
+
+describe('Palafico ativa com 1 vida (modo Vidas)', () => {
+  it('palificoActive quando um jogador tem 1 vida', () => {
+    const rulesLives = { ...R2, punishmentMode: 'lives' as const, palificoEnabled: true };
+    let g = init2(rulesLives, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    // ninguém com 1 vida ainda (começam com 3)
+    g = { ...g, players: g.players.map((p) => ({ ...p, lives: 3 })) };
+    // força recálculo via nextRound em estado round_end
+    const baseReveal = { faceCounts: [], wildCount: 0, bidFace: 1 as const, bidQuantity: 0, effectiveCount: 0, bidWasTrue: false, loserIds: [], kind: 'bid' as const };
+    expect(
+      init2(rulesLives, [{ id: 'a', name: 'A', isBot: false }, { id: 'b', name: 'B', isBot: false }]).palificoActive
+    ).toBe(false);
+    // jogador com 1 vida -> palafico
+    const g2 = { ...g, players: [{ ...g.players[0], lives: 1 }, g.players[1]], phase: 'round_end' as const, lastReveal: { ...baseReveal, loserIds: ['a'] } };
+    const after = nextRound(g2);
+    expect(after.palificoActive).toBe(true);
   });
 });
 

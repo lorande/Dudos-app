@@ -33,6 +33,7 @@ Centralizar em `game-core` um array `FACE_NAMES` e o array `DICE_FACE` (símbolo
 - Quantidade mínima de abertura:
   - Face normal (2–6): **2N − 2**, onde N = número de jogadores ativos.
   - Bico (face 1): **N − 1** (equivalente a teto((2N−2)/2), portanto consistente).
+  - **Durante o Palafico:** **2N − 1** (o bico não é apostável no Palafico).
 - Aplica-se à primeira aposta de **cada** rodada.
 
 ## Validação de Apostas (regra do bico)
@@ -53,7 +54,7 @@ Texto de regra exibido: "A aposta é válida somente se a quantidade for maior e
 A configuração passa a ter a seção **"Regras Especiais"** com **três toggles independentes**:
 
 ### Palafico (já existente)
-Quando qualquer jogador ativo fica com 1 dado, a rodada vira Palafico: o bico não conta como coringa, apenas a face literal vale.
+Quando qualquer jogador ativo fica com **1 dado** (modo Dados) **ou 1 vida** (modo Vidas), a rodada vira Palafico: o bico não conta como coringa, apenas a face literal vale. Nessa rodada, a aposta de abertura mínima é **2N − 1**.
 
 ### Passo (novo)
 - **Pré-condição:** é a vez do jogador, ele possui **5 dados distintos** (5 dados, todos com valores diferentes), e ainda não usou Passo nesta rodada.

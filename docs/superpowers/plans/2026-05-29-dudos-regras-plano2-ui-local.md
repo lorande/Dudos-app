@@ -165,9 +165,9 @@ function formulateBid(
   let quantity = Math.max(1, myCount + estimatedOthers);
   if (level === 1) quantity = Math.max(1, quantity + Math.floor((Math.random() - 0.3) * 2));
 
-  // Abertura: respeita o mínimo 2N-2 / N-1
+  // Abertura: respeita o mínimo 2N-2 / N-1 / (palafico) 2N-1
   if (!current) {
-    const min = minOpeningQuantity(activeCount, bestFace);
+    const min = minOpeningQuantity(activeCount, bestFace, palificoActive);
     return { quantity: Math.max(quantity, min), face: bestFace };
   }
 
@@ -642,7 +642,7 @@ const SECTIONS = [
   { title: '⬆️ Apostas válidas', body: 'A aposta é válida somente se a quantidade for maior e/ou a face for maior.\n\nConverter para bico: aposte bicos em quantidade ≥ metade da quantidade atual, arredondado para cima (teto de X/2).\n\nSair do bico: para voltar a uma face normal, aposte pelo menos 2×Y+1 dessa face (Y = quantidade de bicos atual).' },
   { title: '🎯 Dudar', body: 'Se achar que a aposta é mentira, grite DUDAR! Todos revelam os dados e conta-se a face apostada (+ bicos, se ativos). Se houver dados suficientes, quem dudou perde; senão, quem apostou perde.' },
   { title: '⭐ Bico (coringa)', body: 'O bico (face 1) conta como qualquer face apostada, exceto: quando a aposta é no próprio bico, ou durante o Palafico.' },
-  { title: '🔒 Palafico', body: 'Quando um jogador fica com apenas 1 dado, começa uma rodada Palafico: o bico NÃO conta, só a face literal vale.' },
+  { title: '🔒 Palafico', body: 'Quando um jogador fica com apenas 1 dado (ou 1 vida, no modo Vidas), começa uma rodada Palafico: o bico NÃO conta, só a face literal vale. A aposta de abertura mínima nessa rodada é 2N−1.' },
   { title: '🟣 Passo', body: 'Na sua vez, se você tiver 5 dados distintos, pode declarar "Passo": você pula a vez e a aposta atual permanece. O Passo pode ser dudado pelo próximo jogador — se você realmente tiver 5 distintos, quem duvidou perde; senão, você perde. 1× por rodada.' },
   { title: '🟢 Mesa', body: 'Na sua vez, você pode escolher quantos dados quiser, revelá-los na mesa (públicos, continuam contando) e re-sortear os dados restantes — e em seguida faz uma aposta. 1× por rodada. Usar a Mesa desabilita o Passo naquela rodada.' },
   { title: '❤️ Modos de punição', body: 'Vidas: cada jogador começa com 3 vidas; ao perder, perde 1 vida.\nDados: começa com 5 dados; ao perder, perde 1 dado. Com 0, é eliminado.' },

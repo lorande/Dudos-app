@@ -36,7 +36,10 @@ function nextActiveIndex(state: GameState, from: number): number {
 
 function isPalificoRound(players: PlayerState[], rules: RuleConfig): boolean {
   if (!rules.palificoEnabled) return false;
-  return players.some((p) => !p.isEliminated && p.dice.length === 1);
+  return players.some((p) => {
+    if (p.isEliminated) return false;
+    return rules.punishmentMode === 'dice' ? p.dice.length === 1 : p.lives === 1;
+  });
 }
 
 function finishRound(state: GameState, players: PlayerState[], reveal: RevealResult): GameState {
@@ -199,7 +202,7 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
 
   if (state.currentBid === null) {
     const activeCount = state.players.filter((p) => !p.isEliminated).length;
-    if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face)) {
+    if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face, state.palificoActive)) {
       throw new Error('Aposta de abertura abaixo do mínimo');
     }
   } else if (!isBidHigher(state.currentBid, newBid)) {
@@ -214,7 +217,8 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
   };
 }
 
-export function minOpeningQuantity(activeCount: number, face: Face): number {
+export function minOpeningQuantity(activeCount: number, face: Face, palificoActive = false): number {
+  if (palificoActive) return 2 * activeCount - 1;
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
