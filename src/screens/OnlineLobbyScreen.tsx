@@ -15,7 +15,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'OnlineLobby'>;
 export default function OnlineLobbyScreen({ navigation, route }: Props) {
   const mode = route.params?.mode ?? 'online';
   const {
-    roomCode, mySocketId, lobbyPlayers, pending, joinStatus, game, error,
+    roomCode, mySocketId, amHost, lobbyPlayers, pending, joinStatus, game, error,
     connect, createRoom, requestJoin, approve, reject, startGame, disconnect, clearError,
   } = useOnlineGameStore();
   const { templates, loadTemplates } = useGameStore();
@@ -45,7 +45,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
     }
   }, [game?.phase]);
 
-  const isHost = !!mySocketId && game?.hostId === mySocketId;
+  const isHost = amHost;
   const title = mode === 'physical' ? 'Modo Físico' : 'Jogar Online';
 
   // Tela de espera de aprovação (solicitante)

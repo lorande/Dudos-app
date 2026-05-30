@@ -37,6 +37,7 @@ interface OnlineGameStore {
   roomCode: string | null;
   myName: string;
   mySocketId: string | null;
+  amHost: boolean;
   myDice: Face[];
   lobbyPlayers: { id: string; name: string }[];
   pending: { id: string; name: string }[];
@@ -66,6 +67,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   roomCode: null,
   myName: '',
   mySocketId: null,
+  amHost: false,
   myDice: [],
   lobbyPlayers: [],
   pending: [],
@@ -82,7 +84,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
     socket.on('connect', () => set({ connected: true, mySocketId: socket.id }));
     socket.on('disconnect', () => set({ connected: false }));
 
-    socket.on('room:created', ({ code }) => set({ roomCode: code }));
+    socket.on('room:created', ({ code }) => set({ roomCode: code, amHost: true }));
     socket.on('room:joined', ({ code, players }) =>
       set({ roomCode: code, lobbyPlayers: players, joinStatus: 'approved' })
     );
@@ -126,7 +128,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
 
   disconnect: () => {
     disconnectSocket();
-    set({ roomCode: null, myDice: [], lobbyPlayers: [], pending: [], joinStatus: 'idle', game: null, connected: false });
+    set({ roomCode: null, amHost: false, myDice: [], lobbyPlayers: [], pending: [], joinStatus: 'idle', game: null, connected: false });
   },
 
   clearError: () => set({ error: null }),
