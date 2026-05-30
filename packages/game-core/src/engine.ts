@@ -39,6 +39,19 @@ function isPalificoRound(players: PlayerState[], rules: RuleConfig): boolean {
   return players.some((p) => !p.isEliminated && p.dice.length === 1);
 }
 
+function finishRound(state: GameState, players: PlayerState[], reveal: RevealResult): GameState {
+  const remaining = players.filter((p) => !p.isEliminated);
+  const winnerId = remaining.length === 1 ? remaining[0].id : null;
+  return {
+    ...state,
+    players,
+    phase: winnerId ? 'game_over' : 'round_end',
+    lastReveal: reveal,
+    winnerId,
+    pendingPasso: null,
+  };
+}
+
 export function hasFiveDistinct(player: PlayerState): boolean {
   const all = [...player.dice, ...player.tableDice];
   if (all.length !== 5) return false;
@@ -88,17 +101,7 @@ export function dudoPasso(state: GameState, challengerId: string): GameState {
   };
 
   const updatedPlayers = applyPenalty(state.players, reveal, state.rules);
-  const remaining = updatedPlayers.filter((p) => !p.isEliminated);
-  const winnerId = remaining.length === 1 ? remaining[0].id : null;
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    phase: winnerId ? 'game_over' : 'round_end',
-    lastReveal: reveal,
-    winnerId,
-    pendingPasso: null,
-  };
+  return finishRound(state, updatedPlayers, reveal);
 }
 
 export function resolveManualDudo(state: GameState, loserId: string): GameState {
@@ -123,17 +126,7 @@ export function resolveManualDudo(state: GameState, loserId: string): GameState 
   };
 
   const updatedPlayers = applyPenalty(state.players, reveal, state.rules);
-  const remaining = updatedPlayers.filter((p) => !p.isEliminated);
-  const winnerId = remaining.length === 1 ? remaining[0].id : null;
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    phase: winnerId ? 'game_over' : 'round_end',
-    lastReveal: reveal,
-    winnerId,
-    pendingPasso: null,
-  };
+  return finishRound(state, updatedPlayers, reveal);
 }
 
 export function mesa(state: GameState, playerId: string, indexesToShow: number[]): GameState {
@@ -256,18 +249,7 @@ export function dudo(state: GameState, playerId: string): GameState {
   const revealResult = resolveChallenge(state);
 
   const updatedPlayers = applyPenalty(state.players, revealResult, state.rules);
-  const eliminated = updatedPlayers.filter((p) => p.isEliminated);
-  const remaining = updatedPlayers.filter((p) => !p.isEliminated);
-  const winnerId = remaining.length === 1 ? remaining[0].id : null;
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    phase: winnerId ? 'game_over' : 'round_end',
-    lastReveal: revealResult,
-    winnerId,
-    pendingPasso: null,
-  };
+  return finishRound(state, updatedPlayers, revealResult);
 }
 
 function resolveChallenge(state: GameState): RevealResult {
