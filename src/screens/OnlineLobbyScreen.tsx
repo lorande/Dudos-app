@@ -11,12 +11,13 @@ import { useGameStore } from '../store/gameStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OnlineLobby'>;
 
-export default function OnlineLobbyScreen({ navigation }: Props) {
+export default function OnlineLobbyScreen({ navigation, route }: Props) {
+  const mode = route.params?.mode ?? 'online';
   const {
-    roomCode, mySocketId, myName, lobbyPlayers, game, error,
-    connect, createRoom, joinRoom, startGame, disconnect, clearError,
+    roomCode, mySocketId, lobbyPlayers, pending, joinStatus, game, error,
+    connect, createRoom, requestJoin, approve, reject, startGame, disconnect, clearError,
   } = useOnlineGameStore();
-  const { templates } = useGameStore();
+  const { templates, loadTemplates } = useGameStore();
 
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [name, setName] = useState('');
@@ -26,6 +27,7 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
 
   useEffect(() => {
     connect();
+    loadTemplates();
     return () => { disconnect(); };
   }, []);
 
@@ -38,18 +40,47 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (game?.phase === 'bidding' || game?.phase === 'round_end') {
-      navigation.replace('OnlineGame');
+      navigation.replace(game.mode === 'physical' ? 'PhysicalGame' : 'OnlineGame');
     }
   }, [game?.phase]);
 
-  const isHost = mySocketId && game?.hostId === mySocketId;
+  const isHost = !!mySocketId && game?.hostId === mySocketId;
+  const title = mode === 'physical' ? 'Modo Físico' : 'Jogar Online';
+
+  // Tela de espera de aprovação (solicitante)
+  if (!roomCode && joinStatus === 'waiting') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator color="#f5c518" size="large" />
+          <Text style={styles.waitBig}>Aguardando aprovação do criador da sala…</Text>
+          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
+            <Text style={styles.leaveBtnText}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!roomCode && joinStatus === 'rejected') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={styles.waitBig}>Entrada recusada pelo criador da sala.</Text>
+          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
+            <Text style={styles.leaveBtnText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (roomCode) {
-    // Lobby da sala
+    // Lobby da sala (já aprovado / criador)
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.codeLabel}>Código da sala</Text>
+          <Text style={styles.codeLabel}>Código da sala ({title})</Text>
           <Text style={styles.code}>{roomCode}</Text>
           <Text style={styles.hint}>Compartilhe este código com seus amigos</Text>
 
@@ -61,6 +92,24 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
             </View>
           ))}
 
+          {/* Fila de aprovação (somente host) */}
+          {isHost && pending.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Pedidos de entrada</Text>
+              {pending.map((p) => (
+                <View key={p.id} style={styles.playerRow}>
+                  <Text style={styles.playerName}>{p.name}</Text>
+                  <TouchableOpacity onPress={() => approve(p.id)}>
+                    <Text style={styles.approve}>Aprovar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => reject(p.id)}>
+                    <Text style={styles.reject}>Recusar</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </>
+          )}
+
           {isHost && lobbyPlayers.length >= 2 && (
             <TouchableOpacity style={styles.startBtn} onPress={startGame}>
               <Text style={styles.startBtnText}>Iniciar Partida →</Text>
@@ -69,11 +118,9 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
           {isHost && lobbyPlayers.length < 2 && (
             <Text style={styles.waitText}>Aguardando mais jogadores…</Text>
           )}
-          {!isHost && (
-            <Text style={styles.waitText}>Aguardando o host iniciar…</Text>
-          )}
+          {!isHost && <Text style={styles.waitText}>Aguardando o host iniciar…</Text>}
 
-          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); }}>
+          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
             <Text style={styles.leaveBtnText}>Sair da sala</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -84,7 +131,7 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Tabs */}
+        <Text style={styles.title}>{title}</Text>
         <View style={styles.tabs}>
           {(['create', 'join'] as const).map((t) => (
             <TouchableOpacity
@@ -150,18 +197,18 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
           onPress={() => {
             if (!name.trim()) { Alert.alert('Digite seu nome'); return; }
             setLoading(true);
-            if (tab === 'create') createRoom(name.trim(), selectedRules);
+            if (tab === 'create') createRoom(name.trim(), selectedRules, mode);
             else {
               if (!joinCode.trim() || joinCode.length !== 6) {
                 Alert.alert('Código inválido'); setLoading(false); return;
               }
-              joinRoom(joinCode.trim(), name.trim());
+              requestJoin(joinCode.trim(), name.trim());
             }
           }}
         >
           {loading
             ? <ActivityIndicator color="#1a0a2e" />
-            : <Text style={styles.actionBtnText}>{tab === 'create' ? 'Criar Sala' : 'Entrar'}</Text>
+            : <Text style={styles.actionBtnText}>{tab === 'create' ? 'Criar Sala' : 'Pedir Entrada'}</Text>
           }
         </TouchableOpacity>
       </ScrollView>
@@ -172,6 +219,9 @@ export default function OnlineLobbyScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a0a2e' },
   scroll: { padding: 24, gap: 12 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 20 },
+  title: { color: '#f5c518', fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  waitBig: { color: '#fff', fontSize: 18, textAlign: 'center' },
   tabs: { flexDirection: 'row', backgroundColor: '#2d1b4e', borderRadius: 12, marginBottom: 8 },
   tab: { flex: 1, padding: 14, alignItems: 'center', borderRadius: 12 },
   tabActive: { backgroundColor: '#7c3aed' },
@@ -186,14 +236,15 @@ const styles = StyleSheet.create({
   templateChipText: { color: '#fff', fontSize: 14 },
   actionBtn: { backgroundColor: '#f5c518', borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 8 },
   actionBtnText: { color: '#1a0a2e', fontSize: 18, fontWeight: '900' },
-  // lobby
   codeLabel: { color: '#aaa', fontSize: 14, textAlign: 'center' },
   code: { color: '#f5c518', fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 10 },
   hint: { color: '#666', fontSize: 13, textAlign: 'center', marginBottom: 8 },
-  sectionTitle: { color: '#f5c518', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  sectionTitle: { color: '#f5c518', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
   playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2d1b4e', borderRadius: 10, padding: 14, gap: 10 },
   playerName: { flex: 1, color: '#fff', fontSize: 16 },
   hostBadge: { color: '#f5c518', fontSize: 11, fontWeight: '700', borderWidth: 1, borderColor: '#f5c518', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  approve: { color: '#4ade80', fontSize: 14, fontWeight: '700' },
+  reject: { color: '#f87171', fontSize: 14, fontWeight: '700' },
   startBtn: { backgroundColor: '#f5c518', borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 8 },
   startBtnText: { color: '#1a0a2e', fontSize: 18, fontWeight: '900' },
   waitText: { color: '#666', fontSize: 15, textAlign: 'center', marginTop: 16 },

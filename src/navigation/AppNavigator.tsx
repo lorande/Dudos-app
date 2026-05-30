@@ -19,10 +19,10 @@ export type RootStackParamList = {
   Home: undefined;
   RuleConfig: { mode: 'local' | 'physical' };
   Game: { rules: RuleConfig; humanName: string; botCount: number };
-  PhysicalGame: { rules: RuleConfig; playerNames: string[] };
+  PhysicalGame: undefined;
   Reveal: undefined;
   Result: undefined;
-  OnlineLobby: undefined;
+  OnlineLobby: { mode: 'online' | 'physical' };
   OnlineGame: undefined;
   OnlineResult: undefined;
   Tutorial: undefined;

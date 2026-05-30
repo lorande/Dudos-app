@@ -30,10 +30,20 @@ export default function RevealOverlay({ reveal, players, palificoActive, onConti
         <View style={styles.card}>
           <Text style={styles.title}>Resultado</Text>
 
-          {/* Aposta desafiada */}
-          <Text style={styles.bidText}>
-            Aposta: {reveal.bidQuantity}× {DICE_FACE[reveal.bidFace]} ({FACE_NAMES[reveal.bidFace]})
-          </Text>
+          {/* Cabeçalho conforme o tipo de revelação */}
+          {reveal.kind === 'passo' ? (
+            <Text style={[styles.bidText, reveal.passoWasDistinct && styles.passoOk]}>
+              {reveal.passoWasDistinct
+                ? '5 dados distintos confirmados! 🎲'
+                : 'O Passo era blefe — 5 distintos não confirmados.'}
+            </Text>
+          ) : reveal.kind === 'manual' ? (
+            <Text style={styles.bidText}>Contagem da mesa</Text>
+          ) : (
+            <Text style={styles.bidText}>
+              Aposta: {reveal.bidQuantity}× {DICE_FACE[reveal.bidFace]} ({FACE_NAMES[reveal.bidFace]})
+            </Text>
+          )}
 
           {/* Lista das 6 faces */}
           <View style={styles.faceList}>
@@ -65,14 +75,16 @@ export default function RevealOverlay({ reveal, players, palificoActive, onConti
             </View>
           )}
 
-          {/* Veredicto */}
-          <View style={[styles.verdict, reveal.bidWasTrue ? styles.verdictTrue : styles.verdictFalse]}>
-            <Text style={styles.verdictText}>
-              {reveal.bidWasTrue
-                ? `✅ Aposta verdadeira! (${reveal.effectiveCount} ≥ ${reveal.bidQuantity})`
-                : `❌ Aposta falsa! (${reveal.effectiveCount} < ${reveal.bidQuantity})`}
-            </Text>
-          </View>
+          {/* Veredicto (apenas para Dudo de aposta) */}
+          {(!reveal.kind || reveal.kind === 'bid') && (
+            <View style={[styles.verdict, reveal.bidWasTrue ? styles.verdictTrue : styles.verdictFalse]}>
+              <Text style={styles.verdictText}>
+                {reveal.bidWasTrue
+                  ? `✅ Aposta verdadeira! (${reveal.effectiveCount} ≥ ${reveal.bidQuantity})`
+                  : `❌ Aposta falsa! (${reveal.effectiveCount} < ${reveal.bidQuantity})`}
+              </Text>
+            </View>
+          )}
 
           {/* Perdedor */}
           <Text style={styles.loserText}>
@@ -93,6 +105,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#2d1b4e', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400 },
   title: { color: '#f5c518', fontSize: 24, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
   bidText: { color: '#aaa', fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  passoOk: { color: '#4ade80', fontSize: 17, fontWeight: '800' },
   faceList: { gap: 6, marginBottom: 12 },
   faceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   faceRowHighlight: { backgroundColor: '#3d2060', borderWidth: 1, borderColor: '#7c3aed' },

@@ -8,17 +8,19 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useOnlineGameStore } from '../store/onlineGameStore';
 import { Face, Bid } from '../../packages/game-core/src';
 import RevealOverlay from '../components/RevealOverlay';
+import MesaSelector from '../components/MesaSelector';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OnlineGame'>;
 
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function OnlineGameScreen({ navigation }: Props) {
-  const { game, mySocketId, myDice, bid, dudo, nextRound, disconnect } = useOnlineGameStore();
+  const { game, mySocketId, myDice, bid, dudo, passo, dudoPasso, mesa, nextRound, disconnect } = useOnlineGameStore();
 
   const [bidQty, setBidQty] = useState(1);
   const [bidFace, setBidFace] = useState<Face>(2);
   const [showReveal, setShowReveal] = useState(false);
+  const [showMesa, setShowMesa] = useState(false);
 
   useEffect(() => {
     if (!game) return;
@@ -82,6 +84,9 @@ export default function OnlineGameScreen({ navigation }: Props) {
                 ? <Text style={styles.playerStat}>{'❤️'.repeat(p.lives)}</Text>
                 : <Text style={styles.playerStat}>🎲×{p.diceCount}</Text>
               }
+              {p.tableDice.length > 0 && (
+                <Text style={styles.tableDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
+              )}
             </View>
           ))}
         </View>
@@ -165,7 +170,28 @@ export default function OnlineGameScreen({ navigation }: Props) {
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* Regras especiais */}
+            <View style={styles.specialRow}>
+              {game.rules.passoEnabled && myDice.length === 5 && new Set(myDice).size === 5 && !myPlayer?.usedPasso && (
+                <TouchableOpacity style={styles.specialBtn} onPress={passo}>
+                  <Text style={styles.specialBtnText}>Passo</Text>
+                </TouchableOpacity>
+              )}
+              {game.rules.mesaEnabled && !myPlayer?.usedMesa && (
+                <TouchableOpacity style={styles.specialBtn} onPress={() => setShowMesa(true)}>
+                  <Text style={styles.specialBtnText}>Mesa</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
+        )}
+
+        {/* Dudar o Passo */}
+        {isMyTurn && game.phase === 'bidding' && game.pendingPasso && game.pendingPasso.playerId !== mySocketId && (
+          <TouchableOpacity style={styles.dudoPassoBtn} onPress={dudoPasso}>
+            <Text style={styles.dudoBtnText}>DUDAR O PASSO de {game.players.find((p) => p.id === game.pendingPasso!.playerId)?.name}</Text>
+          </TouchableOpacity>
         )}
 
         {/* Aguardando host avançar rodada */}
@@ -184,6 +210,13 @@ export default function OnlineGameScreen({ navigation }: Props) {
           onContinue={handleNextRound}
         />
       )}
+
+      <MesaSelector
+        visible={showMesa}
+        dice={myDice}
+        onCancel={() => setShowMesa(false)}
+        onConfirm={(idx) => { setShowMesa(false); mesa(idx); }}
+      />
     </SafeAreaView>
   );
 }
@@ -198,6 +231,11 @@ const styles = StyleSheet.create({
   playerChipActive: { borderColor: '#f5c518', backgroundColor: '#3d2060' },
   playerName: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
   playerStat: { color: '#aaa', fontSize: 11, marginTop: 2 },
+  tableDice: { color: '#c084fc', fontSize: 13, marginTop: 2 },
+  specialRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
+  specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
+  dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
   myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },
   myDiceLabel: { color: '#f5c518', fontSize: 13, fontWeight: '700', marginBottom: 10 },
   diceRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
