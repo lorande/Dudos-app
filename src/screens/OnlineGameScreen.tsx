@@ -55,6 +55,9 @@ export default function OnlineGameScreen({ navigation }: Props) {
   const revealPlayers = game.players.map((p) => ({
     ...p,
     dice: [] as Face[], // dados não expostos publicamente
+    tableDice: [] as Face[],
+    usedPasso: false,
+    usedMesa: false,
     isBot: false,
   }));
 
