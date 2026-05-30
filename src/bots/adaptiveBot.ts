@@ -57,7 +57,7 @@ export function botDecide(
   }
 
   // Formular nova aposta
-  const newBid = formulateBid(currentBid, [...bot.dice, ...bot.tableDice], totalDice, p, level, state.palificoActive, activeCount);
+  const newBid = formulateBid(currentBid, [...bot.dice, ...bot.tableDice], totalDice, p, level, state.palificoActive, activeCount, wildEnabled);
   return { action: 'bid', bid: newBid };
 }
 
@@ -68,9 +68,11 @@ function formulateBid(
   p: number,
   level: BotLevel,
   palificoActive: boolean,
-  activeCount: number
+  activeCount: number,
+  wildActive: boolean
 ): Bid {
-  const faces: Face[] = palificoActive ? [2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6];
+  // O bico (face 1) só é apostável quando o coringa está ativo e fora do palafico.
+  const faces: Face[] = wildActive ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6];
 
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
   for (const d of myDice) counts[d]++;
