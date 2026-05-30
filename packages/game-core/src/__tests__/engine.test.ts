@@ -113,3 +113,56 @@ describe('tableDice conta no Dudo', () => {
     expect(after.lastReveal?.loserIds).toContain('b');
   });
 });
+
+import { hasFiveDistinct, passo, dudoPasso, initGame as init4 } from '../engine';
+import { RuleConfig as RC4, PlayerState as PS4 } from '../types';
+
+const RULES4: RC4 = {
+  punishmentMode: 'dice', startingLives: 3, startingDice: 5,
+  wildEnabled: true, palificoEnabled: false, passoEnabled: true,
+  mesaEnabled: true, turnTimerSeconds: null, revealBetweenRounds: false,
+};
+
+function twoPlayers() {
+  return init4(RULES4, [
+    { id: 'a', name: 'A', isBot: false },
+    { id: 'b', name: 'B', isBot: false },
+  ]);
+}
+
+describe('hasFiveDistinct', () => {
+  it('true para 5 dados distintos', () => {
+    const p: PS4 = { id: 'a', name: 'A', dice: [1, 2, 3, 4, 5], tableDice: [], lives: 1, usedPasso: false, usedMesa: false, isBot: false, isEliminated: false };
+    expect(hasFiveDistinct(p)).toBe(true);
+  });
+  it('false com repetição', () => {
+    const p: PS4 = { id: 'a', name: 'A', dice: [1, 2, 3, 4, 4], tableDice: [], lives: 1, usedPasso: false, usedMesa: false, isBot: false, isEliminated: false };
+    expect(hasFiveDistinct(p)).toBe(false);
+  });
+});
+
+describe('passo / dudoPasso', () => {
+  it('passo mantém aposta e avança turno', () => {
+    let g = twoPlayers();
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
+    const after = passo(g, 'a');
+    expect(after.currentBid).toEqual({ quantity: 6, face: 3 });
+    expect(after.players[0].usedPasso).toBe(true);
+    expect(after.pendingPasso).toEqual({ playerId: 'a' });
+    expect(after.currentPlayerIndex).toBe(1);
+  });
+  it('passo rejeitado sem 5 distintos', () => {
+    let g = twoPlayers();
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 1, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
+    expect(() => passo(g, 'a')).toThrow();
+  });
+  it('dudoPasso: passador honesto faz o duvidador perder', () => {
+    let g = twoPlayers();
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
+    g = passo(g, 'a'); // turno vai para b
+    const after = dudoPasso(g, 'b');
+    expect(after.lastReveal?.kind).toBe('passo');
+    expect(after.lastReveal?.passoWasDistinct).toBe(true);
+    expect(after.lastReveal?.loserIds).toContain('b');
+  });
+});

@@ -39,6 +39,68 @@ function isPalificoRound(players: PlayerState[], rules: RuleConfig): boolean {
   return players.some((p) => !p.isEliminated && p.dice.length === 1);
 }
 
+export function hasFiveDistinct(player: PlayerState): boolean {
+  const all = [...player.dice, ...player.tableDice];
+  if (all.length !== 5) return false;
+  return new Set(all).size === 5;
+}
+
+export function passo(state: GameState, playerId: string): GameState {
+  if (state.phase !== 'bidding') throw new Error('Fora de fase');
+  if (!state.rules.passoEnabled) throw new Error('Passo desabilitado');
+  const player = state.players[state.currentPlayerIndex];
+  if (player.id !== playerId) throw new Error('Não é a vez deste jogador');
+  if (player.usedPasso) throw new Error('Passo já usado nesta rodada');
+  if (player.usedMesa) throw new Error('Mesa usada bloqueia o Passo');
+  if (!hasFiveDistinct(player)) throw new Error('Passo exige 5 dados distintos');
+
+  const players = state.players.map((p) =>
+    p.id === playerId ? { ...p, usedPasso: true } : p
+  );
+  return {
+    ...state,
+    players,
+    currentPlayerIndex: nextActiveIndex(state, state.currentPlayerIndex),
+    pendingPasso: { playerId },
+  };
+}
+
+export function dudoPasso(state: GameState, challengerId: string): GameState {
+  if (state.phase !== 'bidding') throw new Error('Fora de fase');
+  if (!state.pendingPasso) throw new Error('Não há Passo para dudar');
+  const challenger = state.players[state.currentPlayerIndex];
+  if (challenger.id !== challengerId) throw new Error('Não é a vez deste jogador');
+
+  const passer = state.players.find((p) => p.id === state.pendingPasso!.playerId)!;
+  const distinct = hasFiveDistinct(passer);
+  const loserId = distinct ? challengerId : passer.id;
+
+  const reveal: RevealResult = {
+    faceCounts: countFaces([...passer.dice, ...passer.tableDice]),
+    wildCount: 0,
+    bidFace: WILD,
+    bidQuantity: 0,
+    effectiveCount: 0,
+    bidWasTrue: distinct,
+    loserIds: [loserId],
+    kind: 'passo',
+    passoWasDistinct: distinct,
+  };
+
+  const updatedPlayers = applyPenalty(state.players, reveal, state.rules);
+  const remaining = updatedPlayers.filter((p) => !p.isEliminated);
+  const winnerId = remaining.length === 1 ? remaining[0].id : null;
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    phase: winnerId ? 'game_over' : 'round_end',
+    lastReveal: reveal,
+    winnerId,
+    pendingPasso: null,
+  };
+}
+
 // ─── Início de Partida ────────────────────────────────────────────────────────
 
 export function initGame(
