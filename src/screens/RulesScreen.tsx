@@ -2,38 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 
 const SECTIONS = [
-  {
-    title: '🎯 Objetivo',
-    body: 'Ser o último jogador com vidas ou dados restantes. Todos os outros devem ser eliminados.',
-  },
-  {
-    title: '🎲 Preparação',
-    body: 'Cada jogador recebe dados (padrão: 5) ou vidas (padrão: 3). Todos lançam seus dados em segredo — ninguém vê os dados dos outros.',
-  },
-  {
-    title: '📣 Rodada',
-    body: 'O primeiro jogador faz uma aposta: quantidade e face (ex: "3 cincos"). O próximo deve fazer uma aposta maior ou dudar. A rodada continua até alguém dudar.',
-  },
-  {
-    title: '⬆️ Apostas válidas',
-    body: 'Uma aposta é maior quando:\n• A quantidade é maior, OU\n• A quantidade é igual e a face é maior.\n\nExemplo: "2 doses" → pode ser "3 doses", "3 ases", "2 treses", etc.',
-  },
-  {
-    title: '🎯 Dudar',
-    body: 'Qualquer jogador pode dudar na sua vez. Todos revelam os dados.\n\nContam-se os dados da face apostada (+ coringas, se ativos).\n\n• Contagem ≥ aposta → quem dudou perde\n• Contagem < aposta → quem apostou perde',
-  },
-  {
-    title: '★ Coringa',
-    body: 'A face 1 (estrela ★) é coringa e conta como qualquer face apostada, exceto quando:\n• A aposta é na própria face 1 (conta literalmente)\n• O modo Palafico está ativo (coringa desativado na rodada)',
-  },
-  {
-    title: '🔒 Palafico',
-    body: 'Quando qualquer jogador fica com apenas 1 dado, uma rodada Palafico começa:\n• O coringa NÃO conta\n• Somente a face literal é válida\n• A restrição vale apenas nessa rodada',
-  },
-  {
-    title: '❤️ Modos de punição',
-    body: 'Modo Vidas: cada jogador começa com 3 vidas. Ao perder, perde 1 vida.\n\nModo Dados: cada jogador começa com 5 dados. Ao perder, perde 1 dado. Com 0 dados, é eliminado.',
-  },
+  { title: '🎯 Objetivo', body: 'Ser o último jogador com vidas ou dados restantes.' },
+  { title: '🎲 As faces (jargão)', body: 'Cada valor tem um nome: 1 = Bico (coringa), 2 = Duque, 3 = Terno, 4 = Quadra, 5 = Quina, 6 = Sena.' },
+  { title: '📣 Aposta inicial', body: 'Quem abre a rodada é obrigado a apostar (não pode dudar de cara). A quantidade mínima de abertura é 2N−2 (N = número de jogadores). Abrindo em bico, o mínimo é N−1.' },
+  { title: '⬆️ Apostas válidas', body: 'A aposta é válida somente se a quantidade for maior e/ou a face for maior.\n\nConverter para bico: aposte bicos em quantidade ≥ metade da quantidade atual, arredondado para cima (teto de X/2).\n\nSair do bico: para voltar a uma face normal, aposte pelo menos 2×Y+1 dessa face (Y = quantidade de bicos atual).' },
+  { title: '🎯 Dudar', body: 'Se achar que a aposta é mentira, grite DUDAR! Todos revelam os dados e conta-se a face apostada (+ bicos, se ativos). Se houver dados suficientes, quem dudou perde; senão, quem apostou perde.' },
+  { title: '⭐ Bico (coringa)', body: 'O bico (face 1) conta como qualquer face apostada, exceto: quando a aposta é no próprio bico, ou durante o Palafico.' },
+  { title: '🔒 Palafico', body: 'Quando um jogador fica com apenas 1 dado (ou 1 vida, no modo Vidas), começa uma rodada Palafico: o bico NÃO conta, só a face literal vale. A aposta de abertura mínima nessa rodada é N−1.' },
+  { title: '🟣 Passo', body: 'Na sua vez, se você tiver 5 dados distintos, pode declarar "Passo": você pula a vez e a aposta atual permanece. O Passo pode ser dudado pelo próximo jogador — se você realmente tiver 5 distintos, quem duvidou perde; senão, você perde. 1× por rodada.' },
+  { title: '🟢 Mesa', body: 'Na sua vez, você pode escolher quantos dados quiser, revelá-los na mesa (públicos, continuam contando) e re-sortear os dados restantes — e em seguida faz uma aposta. 1× por rodada. Usar a Mesa desabilita o Passo naquela rodada.' },
+  { title: '❤️ Modos de punição', body: 'Vidas: cada jogador começa com 3 vidas; ao perder, perde 1 vida.\nDados: começa com 5 dados; ao perder, perde 1 dado. Com 0, é eliminado.' },
 ];
 
 export default function RulesScreen() {

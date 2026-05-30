@@ -95,14 +95,27 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
             onChange={(v) => setRules((r) => ({ ...r, wildEnabled: v }))}
           />
           <ToggleRow
-            label="Variante Palafico"
+            label="Revelar dados entre rodadas"
+            value={rules.revealBetweenRounds}
+            onChange={(v) => setRules((r) => ({ ...r, revealBetweenRounds: v }))}
+          />
+        </Section>
+
+        <Section title="Regras Especiais">
+          <ToggleRow
+            label="Palafico (1 dado → rodada sem coringa)"
             value={rules.palificoEnabled}
             onChange={(v) => setRules((r) => ({ ...r, palificoEnabled: v }))}
           />
           <ToggleRow
-            label="Revelar dados entre rodadas"
-            value={rules.revealBetweenRounds}
-            onChange={(v) => setRules((r) => ({ ...r, revealBetweenRounds: v }))}
+            label="Passo (pular a vez com 5 dados distintos)"
+            value={rules.passoEnabled}
+            onChange={(v) => setRules((r) => ({ ...r, passoEnabled: v }))}
+          />
+          <ToggleRow
+            label="Mesa (revelar dados e re-sortear)"
+            value={rules.mesaEnabled}
+            onChange={(v) => setRules((r) => ({ ...r, mesaEnabled: v }))}
           />
         </Section>
 

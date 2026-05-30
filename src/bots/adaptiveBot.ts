@@ -1,4 +1,4 @@
-import { Bid, Face, GameState, isBidHigher } from '../../packages/game-core/src';
+import { Bid, Face, GameState, isBidHigher, minOpeningQuantity } from '../../packages/game-core/src';
 
 type BotLevel = 1 | 2 | 3;
 
@@ -36,7 +36,8 @@ export function botDecide(
 ): { action: 'bid'; bid: Bid } | { action: 'dudo' } {
   const level = getBotLevel(botId, humanWinCount);
   const active = state.players.filter((p) => !p.isEliminated);
-  const totalDice = active.reduce((s, p) => s + p.dice.length, 0);
+  const totalDice = active.reduce((s, p) => s + p.dice.length + p.tableDice.length, 0);
+  const activeCount = active.length;
   const bot = state.players.find((p) => p.id === botId)!;
   const myDice = bot.dice;
   const currentBid = state.currentBid;
@@ -56,7 +57,7 @@ export function botDecide(
   }
 
   // Formular nova aposta
-  const newBid = formulateBid(currentBid, myDice, totalDice, p, level, state.palificoActive);
+  const newBid = formulateBid(currentBid, [...bot.dice, ...bot.tableDice], totalDice, p, level, state.palificoActive, activeCount, wildEnabled);
   return { action: 'bid', bid: newBid };
 }
 
@@ -66,44 +67,44 @@ function formulateBid(
   totalDice: number,
   p: number,
   level: BotLevel,
-  palificoActive: boolean
+  palificoActive: boolean,
+  activeCount: number,
+  wildActive: boolean
 ): Bid {
-  const faces: Face[] = palificoActive ? [2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6];
+  // O bico (face 1) só é apostável quando o coringa está ativo e fora do palafico.
+  const faces: Face[] = wildActive ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6];
 
-  // Estimar quantidade "segura" baseada nos próprios dados
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
   for (const d of myDice) counts[d]++;
 
   let bestFace: Face = faces[Math.floor(Math.random() * faces.length)];
   if (level >= 2) {
-    // Escolhe a face que o bot mais tem
-    bestFace = (Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as unknown as Face);
-    if (palificoActive && (bestFace as unknown as number) === 1) {
-      bestFace = faces[1]; // evita coringa no palafico
-    }
+    bestFace = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as unknown as Face;
+    if (palificoActive && (bestFace as unknown as number) === 1) bestFace = faces[1];
   }
 
   const myCount = counts[bestFace as unknown as number] ?? 0;
-  // Estima que outros jogadores têm ~p * (totalDice - myDice.length) dessa face
   const estimatedOthers = Math.round(p * (totalDice - myDice.length));
-  let quantity = myCount + estimatedOthers;
+  let quantity = Math.max(1, myCount + estimatedOthers);
+  if (level === 1) quantity = Math.max(1, quantity + Math.floor((Math.random() - 0.3) * 2));
 
-  if (level === 1) {
-    quantity = Math.max(1, quantity + Math.floor((Math.random() - 0.3) * 2));
+  // Abertura: respeita o mínimo 2N-2 / N-1 / (palafico) 2N-1
+  if (!current) {
+    const min = minOpeningQuantity(activeCount, bestFace, palificoActive);
+    return { quantity: Math.max(quantity, min), face: bestFace };
   }
 
-  quantity = Math.max(1, quantity);
+  // Continuação: garante que é estritamente maior
+  let candidate: Bid = { quantity, face: bestFace };
+  if (isBidHigher(current, candidate)) return candidate;
 
-  const candidate: Bid = { quantity, face: bestFace };
-  if (!current || isBidHigher(current, candidate)) {
-    return candidate;
+  // Sobe quantidade até virar válida (limite de segurança)
+  for (let q = current.quantity; q <= current.quantity + totalDice + 2; q++) {
+    candidate = { quantity: q, face: bestFace };
+    if (isBidHigher(current, candidate)) return candidate;
   }
-
-  // Se não é maior, incrementa quantidade ou face
-  if (current.face < 6) {
-    return { quantity: current.quantity, face: (current.face + 1) as Face };
-  }
-  return { quantity: current.quantity + 1, face: faces[0] };
+  // Fallback final: +1 na quantidade da face atual
+  return { quantity: current.quantity + 1, face: current.face };
 }
 
 export function recordHumanWin(humanId: string): void {

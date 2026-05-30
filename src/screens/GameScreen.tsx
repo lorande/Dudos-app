@@ -6,7 +6,8 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useGameStore } from '../store/gameStore';
-import { Face, Bid } from '../../packages/game-core/src';
+import { Face, Bid, hasFiveDistinct } from '../../packages/game-core/src';
+import MesaSelector from '../components/MesaSelector';
 import RevealOverlay from '../components/RevealOverlay';
 import AnimatedDie from '../components/AnimatedDie';
 import AnimatedBidBanner from '../components/AnimatedBidBanner';
@@ -18,11 +19,12 @@ const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function GameScreen({ navigation, route }: Props) {
   const { rules, humanName, botCount } = route.params;
-  const { game, startLocalGame, playerBid, playerDudo, advanceRound, runBotsIfNeeded, resetGame } = useGameStore();
+  const { game, startLocalGame, playerBid, playerDudo, advanceRound, runBotsIfNeeded, resetGame, playerPasso, playerMesa, playerDudoPasso } = useGameStore();
 
   const [bidQty, setBidQty] = useState(1);
   const [bidFace, setBidFace] = useState<Face>(2);
   const [showReveal, setShowReveal] = useState(false);
+  const [showMesa, setShowMesa] = useState(false);
   const [diceAnim, setDiceAnim] = useState<'roll' | 'none'>('none');
   const sfx = useSoundAndHaptics();
 
@@ -62,6 +64,14 @@ export default function GameScreen({ navigation, route }: Props) {
     playerDudo('human');
   }
 
+  function handlePasso() { sfx.placeBid(); playerPasso('human'); }
+  function handleDudoPasso() { sfx.callDudo(); playerDudoPasso('human'); }
+  function handleMesaConfirm(indexes: number[]) {
+    setShowMesa(false);
+    sfx.rollDice();
+    playerMesa('human', indexes);
+  }
+
   function handleNextRound() {
     setShowReveal(false);
     setDiceAnim('roll');
@@ -85,6 +95,9 @@ export default function GameScreen({ navigation, route }: Props) {
                 <Text style={styles.playerStat}>{'❤️'.repeat(p.lives)}</Text>
               ) : (
                 <Text style={styles.playerStat}>🎲×{p.dice.length}</Text>
+              )}
+              {p.tableDice.length > 0 && (
+                <Text style={styles.tableDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
               )}
             </View>
           ))}
@@ -176,7 +189,26 @@ export default function GameScreen({ navigation, route }: Props) {
                 </TouchableOpacity>
               )}
             </View>
+
+            <View style={styles.specialRow}>
+              {game.rules.passoEnabled && hasFiveDistinct(human) && !human.usedPasso && (
+                <TouchableOpacity style={styles.specialBtn} onPress={handlePasso}>
+                  <Text style={styles.specialBtnText}>Passo</Text>
+                </TouchableOpacity>
+              )}
+              {game.rules.mesaEnabled && !human.usedMesa && (
+                <TouchableOpacity style={styles.specialBtn} onPress={() => setShowMesa(true)}>
+                  <Text style={styles.specialBtnText}>Mesa</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
+        )}
+
+        {isMyTurn && game.phase === 'bidding' && game.pendingPasso && game.pendingPasso.playerId !== 'human' && (
+          <TouchableOpacity style={styles.dudoPassoBtn} onPress={handleDudoPasso}>
+            <Text style={styles.dudoBtnText}>DUDAR O PASSO de {game.players.find(p => p.id === game.pendingPasso!.playerId)?.name}</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
 
@@ -189,6 +221,13 @@ export default function GameScreen({ navigation, route }: Props) {
           onContinue={handleNextRound}
         />
       )}
+
+      <MesaSelector
+        visible={showMesa}
+        dice={human.dice}
+        onCancel={() => setShowMesa(false)}
+        onConfirm={handleMesaConfirm}
+      />
     </SafeAreaView>
   );
 }
@@ -229,4 +268,9 @@ const styles = StyleSheet.create({
   bidBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   dudoBtn: { flex: 1, backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
   dudoBtnText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  specialRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
+  specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
+  dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  tableDice: { color: '#c084fc', fontSize: 14, marginTop: 2 },
 });

@@ -9,6 +9,9 @@ import {
   dudo,
   nextRound,
   Bid,
+  passo,
+  mesa,
+  dudoPasso,
 } from '../../packages/game-core/src';
 import { botDecide, getHumanWins } from '../bots/adaptiveBot';
 
@@ -34,6 +37,9 @@ interface GameStore {
   startLocalGame: (rules: RuleConfig, humanName: string, botCount: number) => void;
   playerBid: (playerId: string, newBid: Bid) => void;
   playerDudo: (playerId: string) => void;
+  playerPasso: (playerId: string) => void;
+  playerMesa: (playerId: string, indexes: number[]) => void;
+  playerDudoPasso: (playerId: string) => void;
   advanceRound: () => void;
   runBotsIfNeeded: () => void;
   resetGame: () => void;
@@ -99,6 +105,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (e) {
       console.warn(e);
     }
+  },
+
+  playerPasso: (playerId) => {
+    const { game } = get();
+    if (!game) return;
+    try { set({ game: passo(game, playerId) }); } catch (e) { console.warn(e); }
+  },
+
+  playerMesa: (playerId, indexes) => {
+    const { game } = get();
+    if (!game) return;
+    try { set({ game: mesa(game, playerId, indexes) }); } catch (e) { console.warn(e); }
+  },
+
+  playerDudoPasso: (playerId) => {
+    const { game } = get();
+    if (!game) return;
+    try { set({ game: dudoPasso(game, playerId) }); } catch (e) { console.warn(e); }
   },
 
   advanceRound: () => {
