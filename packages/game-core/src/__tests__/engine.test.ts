@@ -199,3 +199,27 @@ describe('mesa', () => {
     expect(() => passo5(g, 'a')).toThrow();
   });
 });
+
+import { resolveManualDudo, initGame as init6 } from '../engine';
+import { RuleConfig as RC6 } from '../types';
+
+const RULES6: RC6 = {
+  punishmentMode: 'dice', startingLives: 3, startingDice: 5,
+  wildEnabled: true, palificoEnabled: false, passoEnabled: true,
+  mesaEnabled: true, turnTimerSeconds: null, revealBetweenRounds: false,
+};
+
+describe('resolveManualDudo', () => {
+  it('aplica penalidade ao perdedor escolhido e gera tally', () => {
+    let g = init6(RULES6, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, { ...g.players[1], dice: [1, 1, 2, 2, 3] }] };
+    const after = resolveManualDudo(g, 'b');
+    expect(after.lastReveal?.kind).toBe('manual');
+    expect(after.lastReveal?.loserIds).toEqual(['b']);
+    expect(after.players[1].dice).toHaveLength(4); // B perdeu 1 dado
+    expect(after.lastReveal?.faceCounts).toHaveLength(6);
+  });
+});

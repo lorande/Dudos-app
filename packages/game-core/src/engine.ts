@@ -101,6 +101,41 @@ export function dudoPasso(state: GameState, challengerId: string): GameState {
   };
 }
 
+export function resolveManualDudo(state: GameState, loserId: string): GameState {
+  if (state.phase !== 'bidding') throw new Error('Fora de fase');
+  if (!state.players.some((p) => p.id === loserId && !p.isEliminated)) {
+    throw new Error('Perdedor inválido');
+  }
+
+  const allDice = state.players
+    .filter((p) => !p.isEliminated)
+    .flatMap((p) => [...p.dice, ...p.tableDice]);
+
+  const reveal: RevealResult = {
+    faceCounts: countFaces(allDice),
+    wildCount: 0,
+    bidFace: WILD,
+    bidQuantity: 0,
+    effectiveCount: 0,
+    bidWasTrue: false,
+    loserIds: [loserId],
+    kind: 'manual',
+  };
+
+  const updatedPlayers = applyPenalty(state.players, reveal, state.rules);
+  const remaining = updatedPlayers.filter((p) => !p.isEliminated);
+  const winnerId = remaining.length === 1 ? remaining[0].id : null;
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    phase: winnerId ? 'game_over' : 'round_end',
+    lastReveal: reveal,
+    winnerId,
+    pendingPasso: null,
+  };
+}
+
 export function mesa(state: GameState, playerId: string, indexesToShow: number[]): GameState {
   if (state.phase !== 'bidding') throw new Error('Fora de fase');
   if (!state.rules.mesaEnabled) throw new Error('Mesa desabilitada');
