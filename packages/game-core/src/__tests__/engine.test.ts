@@ -81,3 +81,35 @@ describe('bid abertura', () => {
     expect(g2.currentBid).toEqual({ quantity: 6, face: 3 });
   });
 });
+
+import { dudo, bid as bid3, initGame as init3 } from '../engine';
+import { RuleConfig } from '../types';
+
+const RULES_NO_PALIFICO: RuleConfig = {
+  punishmentMode: 'dice', startingLives: 3, startingDice: 5,
+  wildEnabled: true, palificoEnabled: false, passoEnabled: true,
+  mesaEnabled: true, turnTimerSeconds: null, revealBetweenRounds: false,
+};
+
+describe('tableDice conta no Dudo', () => {
+  it('dados na mesa entram na contagem', () => {
+    let g = init3(RULES_NO_PALIFICO, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    // Força mãos determinísticas
+    g = {
+      ...g,
+      players: [
+        { ...g.players[0], dice: [4, 4], tableDice: [4] },
+        { ...g.players[1], dice: [2, 3], tableDice: [] },
+      ],
+      currentBid: { quantity: 3, face: 4 },
+      currentPlayerIndex: 1, // B duda
+    };
+    const after = dudo(g, 'b');
+    // 3 quadras existem (2 na mão de A + 1 na mesa) -> aposta verdadeira -> B perde
+    expect(after.lastReveal?.bidWasTrue).toBe(true);
+    expect(after.lastReveal?.loserIds).toContain('b');
+  });
+});

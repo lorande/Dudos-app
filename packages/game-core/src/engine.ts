@@ -143,12 +143,15 @@ export function dudo(state: GameState, playerId: string): GameState {
     phase: winnerId ? 'game_over' : 'round_end',
     lastReveal: revealResult,
     winnerId,
+    pendingPasso: null,
   };
 }
 
 function resolveChallenge(state: GameState): RevealResult {
   const bid = state.currentBid!;
-  const allDice = state.players.filter((p) => !p.isEliminated).flatMap((p) => p.dice);
+  const allDice = state.players
+    .filter((p) => !p.isEliminated)
+    .flatMap((p) => [...p.dice, ...p.tableDice]);
   const faceCounts = countFaces(allDice);
 
   const wildCount =
@@ -181,29 +184,32 @@ function resolveChallenge(state: GameState): RevealResult {
     effectiveCount,
     bidWasTrue,
     loserIds,
+    kind: 'bid',
   };
 }
 
 function applyPenalty(players: PlayerState[], result: RevealResult, rules: RuleConfig): PlayerState[] {
   return players.map((p) => {
     if (!result.loserIds.includes(p.id)) return p;
+    const total = p.dice.length + p.tableDice.length;
 
     if (rules.punishmentMode === 'lives') {
-      const newLives = p.lives - 1;
+      const newLives = Math.max(0, p.lives - 1);
       const isEliminated = newLives <= 0;
-      const newDiceCount = isEliminated ? 0 : p.dice.length;
       return {
         ...p,
-        lives: Math.max(0, newLives),
-        dice: isEliminated ? [] : rollDice(newDiceCount),
+        lives: newLives,
+        dice: isEliminated ? [] : rollDice(total),
+        tableDice: [],
         isEliminated,
       };
     } else {
-      const newDiceCount = p.dice.length - 1;
-      const isEliminated = newDiceCount <= 0;
+      const newTotal = total - 1;
+      const isEliminated = newTotal <= 0;
       return {
         ...p,
-        dice: isEliminated ? [] : rollDice(newDiceCount),
+        dice: isEliminated ? [] : rollDice(newTotal),
+        tableDice: [],
         isEliminated,
       };
     }
