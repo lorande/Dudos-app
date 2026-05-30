@@ -42,12 +42,9 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
   }
 
   function handleStart() {
-    if (mode === 'local') {
-      navigation.navigate('Game', { rules, humanName, botCount });
-    } else {
-      const names = playerNames.slice(0, playerCount);
-      navigation.navigate('PhysicalGame', { rules, playerNames: names });
-    }
+    // RuleConfig é usado apenas para o jogo local com bots.
+    // O Modo Físico agora é multiplayer em rede (via OnlineLobby).
+    navigation.navigate('Game', { rules, humanName, botCount });
   }
 
   return (

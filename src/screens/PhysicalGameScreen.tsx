@@ -1,229 +1,138 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import {
-  RuleConfig, Face, Bid, PlayerState, RevealResult, FaceCount,
-  rollDice, initGame, bid, dudo, nextRound,
-} from '../../packages/game-core/src';
+import { useOnlineGameStore } from '../store/onlineGameStore';
+import { Face } from '../../packages/game-core/src';
 import RevealOverlay from '../components/RevealOverlay';
+import MesaSelector from '../components/MesaSelector';
+import LoserSelectOverlay from '../components/LoserSelectOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PhysicalGame'>;
 
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
-export default function PhysicalGameScreen({ navigation, route }: Props) {
-  const { rules, playerNames } = route.params;
+export default function PhysicalGameScreen({ navigation }: Props) {
+  const { game, mySocketId, myDice, mesa, resolveDudo, nextRound, disconnect } = useOnlineGameStore();
 
-  const [game, setGame] = useState(() =>
-    initGame(
-      rules,
-      playerNames.map((name, i) => ({ id: `p${i}`, name, isBot: false }))
-    )
-  );
-  const [bidQty, setBidQty] = useState(1);
-  const [bidFace, setBidFace] = useState<Face>(2);
   const [showReveal, setShowReveal] = useState(false);
-  const [viewingPlayerId, setViewingPlayerId] = useState<string | null>(null);
-
-  // Modo físico: cada jogador "passa o celular" para ver seus dados em privado
-  const [privateView, setPrivateView] = useState(true); // true = pedindo para passar o celular
+  const [showMesa, setShowMesa] = useState(false);
+  const [showLoser, setShowLoser] = useState(false);
 
   useEffect(() => {
-    if (game.phase === 'game_over') {
-      Alert.alert('Fim de Jogo!', `${game.players.find(p => p.id === game.winnerId)?.name} venceu!`, [
-        { text: 'Menu', onPress: () => navigation.replace('Home') },
-      ]);
-    }
-    if (game.phase === 'round_end') {
-      setShowReveal(true);
-    }
-  }, [game.phase]);
+    if (!game) return;
+    if (game.phase === 'game_over') { navigation.replace('OnlineResult'); return; }
+    if (game.phase === 'round_end') setShowReveal(true);
+    else setShowReveal(false);
+    if (game.phase !== 'bidding') setShowLoser(false); // evita emitir resolve em fase errada
+  }, [game?.phase]);
 
+  if (!game) return null;
+
+  const myPlayer = game.players.find((p) => p.id === mySocketId);
+  const isHost = game.hostId === mySocketId;
   const activePlayers = game.players.filter((p) => !p.isEliminated);
-  const currentPlayer = game.players[game.currentPlayerIndex];
 
-  function handleDudo() {
-    try {
-      setGame((g) => dudo(g, currentPlayer.id));
-    } catch (e: any) {
-      Alert.alert('Erro', e.message);
-    }
-  }
-
-  function handleBid() {
-    const newBid: Bid = { quantity: bidQty, face: bidFace };
-    try {
-      setGame((g) => bid(g, currentPlayer.id, newBid));
-    } catch (e: any) {
-      Alert.alert('Aposta inválida', e.message);
-    }
-  }
+  const revealPlayers = game.players.map((p) => ({
+    ...p, dice: [] as Face[], tableDice: p.tableDice, usedPasso: false, usedMesa: false, isBot: false,
+  }));
 
   function handleNextRound() {
     setShowReveal(false);
-    setGame((g) => nextRound(g));
+    if (isHost) nextRound();
   }
 
-  // Tela de "passe o celular para X ver seus dados"
-  if (viewingPlayerId === null && privateView) {
-    const nextViewer = activePlayers[0];
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Text style={styles.passTitle}>Passe o celular para</Text>
-          <Text style={styles.passName}>{nextViewer?.name}</Text>
-          <Text style={styles.passSubtitle}>ver seus dados em privado</Text>
-          <TouchableOpacity style={styles.startBtn} onPress={() => {
-            setViewingPlayerId(nextViewer.id);
-            setPrivateView(false);
-          }}>
-            <Text style={styles.startBtnText}>Ver meus dados 🎲</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Tela privada de um jogador específico
-  if (viewingPlayerId !== null) {
-    const viewer = game.players.find(p => p.id === viewingPlayerId)!;
-    const viewerIndex = activePlayers.findIndex(p => p.id === viewingPlayerId);
-    const isLast = viewerIndex >= activePlayers.length - 1;
-
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Text style={styles.passTitle}>Dados de</Text>
-          <Text style={styles.passName}>{viewer.name}</Text>
-          <View style={styles.privateDice}>
-            {viewer.dice.map((d, i) => (
-              <Text key={i} style={styles.bigDie}>{DICE_FACE[d]}</Text>
-            ))}
-          </View>
-          {rules.punishmentMode === 'lives' && (
-            <Text style={styles.lives}>{'❤️'.repeat(viewer.lives)}</Text>
-          )}
-          <TouchableOpacity
-            style={styles.startBtn}
-            onPress={() => {
-              if (isLast) {
-                setViewingPlayerId(null);
-                setPrivateView(false);
-              } else {
-                const next = activePlayers[viewerIndex + 1];
-                setViewingPlayerId(next.id);
-              }
-            }}
-          >
-            <Text style={styles.startBtnText}>
-              {isLast ? 'Começar Rodada →' : `Passar para ${activePlayers[viewerIndex + 1]?.name}`}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Mesa de jogo
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.roomBadge}>
+          <Text style={styles.roomBadgeText}>Mesa {game.roomCode} · Rodada {game.roundNumber} · apostas em voz alta</Text>
+        </View>
 
         {/* Jogadores */}
         <View style={styles.playersRow}>
           {activePlayers.map((p) => (
-            <View
-              key={p.id}
-              style={[styles.playerChip, currentPlayer?.id === p.id && styles.playerChipActive]}
-            >
-              <Text style={styles.playerName}>{p.name}</Text>
-              {rules.punishmentMode === 'lives' ? (
-                <Text style={styles.playerStat}>{'❤️'.repeat(p.lives)}</Text>
-              ) : (
-                <Text style={styles.playerStat}>🎲×{p.dice.length}</Text>
+            <View key={p.id} style={styles.playerChip}>
+              <Text style={styles.playerName}>{p.name}{p.id === mySocketId ? ' (eu)' : ''}</Text>
+              {game.rules.punishmentMode === 'lives'
+                ? <Text style={styles.playerStat}>{'❤️'.repeat(p.lives)}</Text>
+                : <Text style={styles.playerStat}>🎲×{p.diceCount}</Text>}
+              {p.tableDice.length > 0 && (
+                <Text style={styles.tableDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
               )}
             </View>
           ))}
         </View>
 
-        {/* Aposta atual */}
-        <View style={styles.currentBid}>
-          <Text style={styles.currentBidLabel}>Aposta atual</Text>
-          {game.currentBid ? (
-            <Text style={styles.currentBidValue}>
-              {game.currentBid.quantity}× {DICE_FACE[game.currentBid.face]}
-            </Text>
-          ) : (
-            <Text style={styles.currentBidNone}>Nenhuma ainda — {currentPlayer?.name} começa</Text>
-          )}
-        </View>
-
-        {game.palificoActive && (
-          <View style={styles.palificoBanner}>
-            <Text style={styles.palificoText}>🔒 Palafico — sem coringa</Text>
+        {/* Meus dados */}
+        {myPlayer && !myPlayer.isEliminated && (
+          <View style={styles.myDice}>
+            <Text style={styles.myDiceLabel}>Seus dados (só você vê)</Text>
+            <View style={styles.diceRow}>
+              {myDice.map((d, i) => <Text key={i} style={styles.die}>{DICE_FACE[d]}</Text>)}
+            </View>
           </View>
         )}
 
-        {/* Ações — qualquer um pode apertar */}
-        <View style={styles.actions}>
-          <Text style={styles.actionLabel}>
-            Vez de {currentPlayer?.name} — apostas em voz alta
-          </Text>
-
-          {/* Registrar aposta (botão para confirmar o que foi dito em voz alta) */}
-          <Text style={styles.hint}>Registre a aposta feita em voz alta:</Text>
-
-          <View style={styles.pickerRow}>
-            <Text style={styles.pickerLabel}>Quantidade</Text>
-            <View style={styles.pickerButtons}>
-              <TouchableOpacity style={styles.pickerBtn} onPress={() => setBidQty((q) => Math.max(1, q - 1))}>
-                <Text style={styles.pickerBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={styles.pickerValue}>{bidQty}</Text>
-              <TouchableOpacity style={styles.pickerBtn} onPress={() => setBidQty((q) => q + 1)}>
-                <Text style={styles.pickerBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
+        {game.palificoActive && (
+          <View style={styles.palificoBanner}>
+            <Text style={styles.palificoText}>🔒 Palafico ativo — sem coringa</Text>
           </View>
+        )}
 
-          <View style={styles.facePicker}>
-            {([2, 3, 4, 5, 6, ...(rules.wildEnabled && !game.palificoActive ? [1] : [])] as Face[]).map((f) => (
-              <TouchableOpacity
-                key={f}
-                style={[styles.faceBtn, bidFace === f && styles.faceBtnActive]}
-                onPress={() => setBidFace(f)}
-              >
-                <Text style={styles.faceBtnText}>{DICE_FACE[f]}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.bidBtn} onPress={handleBid}>
-            <Text style={styles.bidBtnText}>Confirmar Aposta {bidQty}× {DICE_FACE[bidFace]}</Text>
-          </TouchableOpacity>
-
-          {game.currentBid && (
-            <TouchableOpacity style={styles.dudoBtn} onPress={handleDudo}>
+        {/* Ações: qualquer jogador pode Dudar; Mesa disponível */}
+        {game.phase === 'bidding' && !myPlayer?.isEliminated && (
+          <View style={styles.actions}>
+            <Text style={styles.actionLabel}>As apostas são faladas em voz alta. Ao desafiar, toque em Dudar.</Text>
+            <TouchableOpacity style={styles.dudoBtn} onPress={() => setShowLoser(true)}>
               <Text style={styles.dudoBtnText}>DUDAR! 🎯</Text>
             </TouchableOpacity>
-          )}
-        </View>
+            {game.rules.mesaEnabled && !myPlayer?.usedMesa && (
+              <TouchableOpacity style={styles.mesaBtn} onPress={() => setShowMesa(true)}>
+                <Text style={styles.mesaBtnText}>Mesa</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {myPlayer?.isEliminated && (
+          <View style={styles.eliminatedBanner}>
+            <Text style={styles.eliminatedText}>Você foi eliminado — assistindo…</Text>
+          </View>
+        )}
+
+        <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>
+          <Text style={styles.leaveBtnText}>Sair</Text>
+        </TouchableOpacity>
       </ScrollView>
 
+      {/* Selecionar perdedor (sem tally — clientes não veem dados alheios antes) */}
+      <LoserSelectOverlay
+        visible={showLoser}
+        faceCounts={[]}
+        players={activePlayers.map((p) => ({ id: p.id, name: p.name }))}
+        onCancel={() => setShowLoser(false)}
+        onSelect={(loserId) => { setShowLoser(false); resolveDudo(loserId); }}
+      />
+
+      {/* Resultado: contagem das 6 faces */}
       {showReveal && game.lastReveal && (
         <RevealOverlay
           reveal={game.lastReveal}
-          players={game.players}
+          players={revealPlayers}
           palificoActive={game.palificoActive}
-          onContinue={() => {
-            handleNextRound();
-            setPrivateView(true);
-          }}
+          onContinue={handleNextRound}
         />
       )}
+
+      <MesaSelector
+        visible={showMesa}
+        dice={myDice}
+        onCancel={() => setShowMesa(false)}
+        onConfirm={(idx) => { setShowMesa(false); mesa(idx); }}
+      />
     </SafeAreaView>
   );
 }
@@ -231,41 +140,27 @@ export default function PhysicalGameScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a0a2e' },
   scroll: { padding: 16, gap: 12 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
-  passTitle: { color: '#aaa', fontSize: 18 },
-  passName: { color: '#f5c518', fontSize: 36, fontWeight: '900' },
-  passSubtitle: { color: '#888', fontSize: 15 },
-  privateDice: { flexDirection: 'row', gap: 12, marginVertical: 16, flexWrap: 'wrap', justifyContent: 'center' },
-  bigDie: { fontSize: 64 },
-  lives: { fontSize: 24, marginBottom: 8 },
-  startBtn: { backgroundColor: '#7c3aed', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, marginTop: 12 },
-  startBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  roomBadge: { backgroundColor: '#2d1b4e', borderRadius: 8, padding: 8, alignItems: 'center' },
+  roomBadgeText: { color: '#888', fontSize: 12, textAlign: 'center' },
   playersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   playerChip: { backgroundColor: '#2d1b4e', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#4a2e7a', minWidth: 80 },
-  playerChipActive: { borderColor: '#f5c518', backgroundColor: '#3d2060' },
-  playerName: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  playerStat: { color: '#aaa', fontSize: 12, marginTop: 2 },
-  currentBid: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, alignItems: 'center' },
-  currentBidLabel: { color: '#aaa', fontSize: 13 },
-  currentBidValue: { color: '#fff', fontSize: 36, fontWeight: '900', marginTop: 4 },
-  currentBidNone: { color: '#555', fontSize: 15, marginTop: 4, textAlign: 'center' },
+  playerName: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  playerStat: { color: '#aaa', fontSize: 11, marginTop: 2 },
+  tableDice: { color: '#c084fc', fontSize: 13, marginTop: 2 },
+  myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },
+  myDiceLabel: { color: '#f5c518', fontSize: 13, fontWeight: '700', marginBottom: 10 },
+  diceRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  die: { fontSize: 40 },
   palificoBanner: { backgroundColor: '#3b0764', borderRadius: 8, padding: 10, alignItems: 'center' },
   palificoText: { color: '#c084fc', fontSize: 13, fontWeight: '700' },
   actions: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, gap: 12 },
-  actionLabel: { color: '#f5c518', fontSize: 14, fontWeight: '700' },
-  hint: { color: '#888', fontSize: 13 },
-  pickerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pickerLabel: { color: '#aaa', fontSize: 14 },
-  pickerButtons: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  pickerBtn: { backgroundColor: '#4a2e7a', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  pickerBtnText: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  pickerValue: { color: '#fff', fontSize: 22, fontWeight: '900', minWidth: 32, textAlign: 'center' },
-  facePicker: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  faceBtn: { padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#4a2e7a' },
-  faceBtnActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  faceBtnText: { fontSize: 30 },
-  bidBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 16, alignItems: 'center' },
-  bidBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  actionLabel: { color: '#aaa', fontSize: 13, textAlign: 'center' },
   dudoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 18, alignItems: 'center' },
   dudoBtnText: { color: '#fff', fontSize: 20, fontWeight: '900' },
+  mesaBtn: { borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 14, alignItems: 'center' },
+  mesaBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
+  eliminatedBanner: { backgroundColor: '#450a0a', borderRadius: 8, padding: 14, alignItems: 'center' },
+  eliminatedText: { color: '#fca5a5', fontSize: 15 },
+  leaveBtn: { borderWidth: 1, borderColor: '#dc2626', borderRadius: 12, padding: 12, alignItems: 'center', marginTop: 8 },
+  leaveBtnText: { color: '#dc2626', fontSize: 15 },
 });
