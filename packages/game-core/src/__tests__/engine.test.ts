@@ -223,3 +223,36 @@ describe('resolveManualDudo', () => {
     expect(after.lastReveal?.faceCounts).toHaveLength(6);
   });
 });
+
+import { nextRound, initGame as init7 } from '../engine';
+import { RuleConfig as RC7 } from '../types';
+
+const RULES7: RC7 = {
+  punishmentMode: 'dice', startingLives: 3, startingDice: 5,
+  wildEnabled: true, palificoEnabled: false, passoEnabled: true,
+  mesaEnabled: true, turnTimerSeconds: null, revealBetweenRounds: false,
+};
+
+describe('nextRound reseta estado especial', () => {
+  it('limpa tableDice/usedPasso/usedMesa e re-sorteia o total', () => {
+    let g = init7(RULES7, [
+      { id: 'a', name: 'A', isBot: false },
+      { id: 'b', name: 'B', isBot: false },
+    ]);
+    g = {
+      ...g,
+      phase: 'round_end',
+      lastReveal: { faceCounts: [], wildCount: 0, bidFace: 1, bidQuantity: 0, effectiveCount: 0, bidWasTrue: false, loserIds: ['a'], kind: 'bid' },
+      players: [
+        { ...g.players[0], dice: [6, 6], tableDice: [2, 3, 4], usedPasso: true, usedMesa: true },
+        { ...g.players[1] },
+      ],
+    };
+    const after = nextRound(g);
+    expect(after.players[0].tableDice).toEqual([]);
+    expect(after.players[0].usedPasso).toBe(false);
+    expect(after.players[0].usedMesa).toBe(false);
+    expect(after.players[0].dice).toHaveLength(5); // 2 privados + 3 da mesa
+    expect(after.pendingPasso).toBeNull();
+  });
+});

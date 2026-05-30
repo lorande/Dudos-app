@@ -345,7 +345,15 @@ export function nextRound(state: GameState): GameState {
   if (state.phase !== 'round_end') throw new Error('Partida não está em round_end');
 
   const updatedPlayers = state.players.map((p) =>
-    p.isEliminated ? p : { ...p, dice: rollDice(p.dice.length) }
+    p.isEliminated
+      ? p
+      : {
+          ...p,
+          dice: rollDice(p.dice.length + p.tableDice.length),
+          tableDice: [],
+          usedPasso: false,
+          usedMesa: false,
+        }
   );
 
   const palificoActive = isPalificoRound(updatedPlayers, state.rules);
@@ -365,6 +373,7 @@ export function nextRound(state: GameState): GameState {
     phase: 'bidding',
     lastReveal: null,
     palificoActive,
+    pendingPasso: null,
     roundNumber: state.roundNumber + 1,
   };
 }
