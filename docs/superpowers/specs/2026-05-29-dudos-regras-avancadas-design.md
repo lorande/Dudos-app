@@ -63,6 +63,7 @@ Quando qualquer jogador ativo fica com 1 dado, a rodada vira Palafico: o bico n�
   - Caso contrário → o passador perde 1 vida/dado.
 - **Frequência:** 1× por rodada por jogador.
 - A verificação de "5 distintos" considera `dice + tableDice` (mão completa do jogador).
+- **Mensagem de revelação (online):** quando um Passo é dudado e a revelação confirma os 5 dados distintos, exibir uma mensagem destacada (ex.: "5 dados distintos confirmados! 🎲 X perde.") no overlay de resultado dos jogos online. A mensagem é reaproveitável nas telas local/físico, mas o escopo prioritário é o online.
 
 ### Mesa (novo)
 - **Pré-condição:** é a vez do jogador e ele ainda não usou Mesa nesta rodada.
@@ -125,6 +126,7 @@ Corrigir também o bug existente em `initGame` (`punishmentMode === 'dice' ? sta
 - Espelhar as mudanças de `types.ts` e `engine.ts` no `server/src/game/`.
 - Novos eventos Socket.IO: `game:passo`, `game:dudo_passo`, `game:mesa`.
 - Servidor continua autoridade; re-sorteio da Mesa acontece no servidor e os novos dados privados são reenviados via `game:your_dice`.
+- Ao resolver um `game:dudo_passo`, o servidor inclui no estado público se os 5 dados eram distintos, para o cliente exibir a mensagem de revelação correspondente.
 
 ## RulesScreen (`src/screens/RulesScreen.tsx`)
 
