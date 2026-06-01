@@ -256,8 +256,9 @@ export function availableBidFaces(
   palificoActive: boolean
 ): Face[] {
   if (palificoActive) {
-    // Palafico: face travada; na abertura escolhe livremente (sem bico).
-    return current ? [current.face] : ([2, 3, 4, 5, 6] as Face[]);
+    // Palafico: o bico não é coringa, mas pode ser apostado como face literal.
+    // A face fica travada após a abertura.
+    return current ? [current.face] : ([1, 2, 3, 4, 5, 6] as Face[]);
   }
   const bico: Face[] = wildEnabled ? [WILD] : [];
   if (!current || current.face === WILD) {

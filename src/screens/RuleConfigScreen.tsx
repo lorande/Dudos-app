@@ -32,7 +32,9 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
   useEffect(() => { loadTemplates(); }, []);
 
   function applyTemplate(t: RuleTemplate) {
-    setRules(t.rules);
+    // Mescla com os padrões para garantir todos os campos (toggles + punição).
+    setRules({ ...DEFAULT_RULES, ...t.rules });
+    Alert.alert('Template aplicado', `Regras de "${t.name}" carregadas.`);
   }
 
   function handleSaveTemplate() {
@@ -57,8 +59,9 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
           <Section title="Templates Salvos">
             {templates.map((t) => (
               <View key={t.id} style={styles.templateRow}>
-                <TouchableOpacity style={styles.templateBtn} onPress={() => applyTemplate(t)}>
-                  <Text style={styles.templateName}>{t.name}</Text>
+                <Text style={styles.templateName}>{t.name}</Text>
+                <TouchableOpacity style={styles.applyBtn} onPress={() => applyTemplate(t)}>
+                  <Text style={styles.applyBtnText}>Aplicar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteTemplate(t.id)}>
                   <Text style={styles.deleteBtn}>✕</Text>
@@ -253,10 +256,11 @@ const styles = StyleSheet.create({
   toggleLabel: { color: '#ddd', fontSize: 14, flex: 1, marginRight: 12 },
   label: { color: '#aaa', fontSize: 13, marginBottom: 8, marginTop: 4 },
   input: { backgroundColor: '#1a0a2e', color: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1, borderColor: '#4a2e7a' },
-  templateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  templateBtn: { flex: 1, backgroundColor: '#1a0a2e', borderRadius: 8, padding: 10 },
-  templateName: { color: '#fff', fontSize: 15 },
-  deleteBtn: { color: '#f87171', fontSize: 18, paddingHorizontal: 12 },
+  templateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: '#1a0a2e', borderRadius: 8, padding: 10, gap: 10 },
+  templateName: { color: '#fff', fontSize: 15, flex: 1 },
+  applyBtn: { backgroundColor: '#7c3aed', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
+  applyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  deleteBtn: { color: '#f87171', fontSize: 18, paddingHorizontal: 8 },
   secondaryBtn: { borderWidth: 1, borderColor: '#4a2e7a', borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8 },
   secondaryBtnText: { color: '#aaa', fontSize: 15 },
   templateSave: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, marginBottom: 8 },
