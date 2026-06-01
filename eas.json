@@ -14,12 +14,12 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.railway.app"
+        "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.onrender.com"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.railway.app"
+        "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.onrender.com"
       }
     }
   },
