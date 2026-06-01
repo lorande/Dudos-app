@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useGameStore } from '../store/gameStore';
-import { Face, Bid, hasFiveDistinct } from '../../packages/game-core/src';
+import { Face, Bid, hasFiveDistinct, availableBidFaces } from '../../packages/game-core/src';
 import MesaSelector from '../components/MesaSelector';
 import RevealOverlay from '../components/RevealOverlay';
 import AnimatedDie from '../components/AnimatedDie';
@@ -46,6 +46,13 @@ export default function GameScreen({ navigation, route }: Props) {
     }
     runBotsIfNeeded();
   }, [game?.phase, game?.currentPlayerIndex]);
+
+  // Garante que a face selecionada continua válida quando a aposta atual muda.
+  useEffect(() => {
+    if (!game) return;
+    const faces = availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive);
+    if (!faces.includes(bidFace)) setBidFace(faces[0]);
+  }, [game?.currentBid?.quantity, game?.currentBid?.face, game?.palificoActive]);
 
   if (!game) return null;
 
@@ -168,7 +175,7 @@ export default function GameScreen({ navigation, route }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>Face</Text>
               <View style={styles.facePicker}>
-                {([2, 3, 4, 5, 6, ...(rules.wildEnabled && !game.palificoActive ? [1] : [])] as Face[]).map((f) => (
+                {availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive).map((f) => (
                   <TouchableOpacity
                     key={f}
                     style={[styles.faceBtn, bidFace === f && styles.faceBtnActive]}

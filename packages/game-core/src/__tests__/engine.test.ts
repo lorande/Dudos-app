@@ -29,12 +29,22 @@ describe('isBidHigher (bico)', () => {
   it('primeira aposta é sempre válida', () => {
     expect(isBidHigher(null, { quantity: 3, face: 4 })).toBe(true);
   });
-  it('normal -> normal: quantidade maior', () => {
-    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 2 })).toBe(true);
+  it('normal -> normal: quantidade maior, mesma face ou maior', () => {
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 4 })).toBe(true);
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 5 })).toBe(true);
+  });
+  it('normal -> normal: face não pode diminuir', () => {
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 2 })).toBe(false);
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 9, face: 3 })).toBe(false);
   });
   it('normal -> normal: mesma quantidade, face maior', () => {
     expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 3, face: 5 })).toBe(true);
     expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 3, face: 3 })).toBe(false);
+  });
+  it('palafico: só aumenta quantidade, face travada', () => {
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 4 }, true)).toBe(true);
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 4, face: 5 }, true)).toBe(false);
+    expect(isBidHigher({ quantity: 3, face: 4 }, { quantity: 3, face: 4 }, true)).toBe(false);
   });
   it('normal -> bico: precisa de teto(q/2) bicos', () => {
     // q=5 -> ceil(2.5)=3

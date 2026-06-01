@@ -94,16 +94,19 @@ function formulateBid(
     return { quantity: Math.max(quantity, min), face: bestFace };
   }
 
-  // Continuação: garante que é estritamente maior
-  let candidate: Bid = { quantity, face: bestFace };
-  if (isBidHigher(current, candidate)) return candidate;
+  // No palafico a face é travada na aposta atual.
+  const face = palificoActive ? current.face : bestFace;
 
-  // Sobe quantidade até virar válida (limite de segurança)
+  // Continuação: garante que é uma aposta válida.
+  let candidate: Bid = { quantity, face };
+  if (isBidHigher(current, candidate, palificoActive)) return candidate;
+
+  // Sobe a quantidade até virar válida (limite de segurança).
   for (let q = current.quantity; q <= current.quantity + totalDice + 2; q++) {
-    candidate = { quantity: q, face: bestFace };
-    if (isBidHigher(current, candidate)) return candidate;
+    candidate = { quantity: q, face };
+    if (isBidHigher(current, candidate, palificoActive)) return candidate;
   }
-  // Fallback final: +1 na quantidade da face atual
+  // Fallback final: +1 na quantidade da face atual.
   return { quantity: current.quantity + 1, face: current.face };
 }
 

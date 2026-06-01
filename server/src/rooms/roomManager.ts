@@ -40,7 +40,8 @@ export function createRoom(socketId: string, name: string, rules: RuleConfig, mo
 export function requestJoin(socketId: string, code: string, name: string): RoomMeta | null {
   const room = rooms.get(code);
   if (!room || room.phase !== 'lobby') return null;
-  room.pending.set(socketId, name);
+  // Entrada direta, sem aprovação do host.
+  room.playerNames.set(socketId, name);
   socketRoomMap.set(socketId, code);
   return room;
 }

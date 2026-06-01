@@ -205,7 +205,7 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
     if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face, state.palificoActive)) {
       throw new Error('Aposta de abertura abaixo do mínimo');
     }
-  } else if (!isBidHigher(state.currentBid, newBid)) {
+  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive)) {
     throw new Error('Aposta deve ser maior que a atual');
   }
 
@@ -222,12 +222,20 @@ export function minOpeningQuantity(activeCount: number, face: Face, palificoActi
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
-export function isBidHigher(current: Bid | null, next: Bid): boolean {
+export function isBidHigher(current: Bid | null, next: Bid, palificoActive = false): boolean {
   if (!current) return true;
+
+  // Palafico: a face fica travada — só pode aumentar a quantidade.
+  if (palificoActive) {
+    return next.face === current.face && next.quantity > current.quantity;
+  }
+
   const curBico = current.face === WILD;
   const nextBico = next.face === WILD;
 
   if (!curBico && !nextBico) {
+    // A face nunca pode ser menor que a da última aposta.
+    if (next.face < current.face) return false;
     if (next.quantity > current.quantity) return true;
     if (next.quantity === current.quantity && next.face > current.face) return true;
     return false;
@@ -239,6 +247,25 @@ export function isBidHigher(current: Bid | null, next: Bid): boolean {
     return next.quantity >= 2 * current.quantity + 1;
   }
   return next.quantity > current.quantity; // bico -> bico
+}
+
+// Faces que o jogador pode escolher ao apostar, conforme a aposta atual.
+export function availableBidFaces(
+  current: Bid | null,
+  wildEnabled: boolean,
+  palificoActive: boolean
+): Face[] {
+  if (palificoActive) {
+    // Palafico: face travada; na abertura escolhe livremente (sem bico).
+    return current ? [current.face] : ([2, 3, 4, 5, 6] as Face[]);
+  }
+  const bico: Face[] = wildEnabled ? [WILD] : [];
+  if (!current || current.face === WILD) {
+    return ([2, 3, 4, 5, 6] as Face[]).concat(bico);
+  }
+  // Face normal atual: não pode diminuir a face.
+  const normals = ([2, 3, 4, 5, 6] as Face[]).filter((f) => f >= current.face);
+  return normals.concat(bico);
 }
 
 // ─── Ação: Dudar ─────────────────────────────────────────────────────────────

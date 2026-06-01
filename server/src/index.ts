@@ -45,8 +45,10 @@ io.on('connection', (socket) => {
     try {
       const room = requestJoin(socket.id, code, name);
       if (!room) { socket.emit('error', 'Sala não encontrada ou já iniciada'); return; }
-      io.to(room.hostId).emit('room:pending_update', { pending: getPending(code) });
-      console.log(`[room:request_join] ${name} pediu entrada em ${code}`);
+      socket.join(code);
+      socket.emit('room:join_result', { approved: true });
+      io.to(code).emit('room:joined', { code, players: getLobbyPlayers(code) });
+      console.log(`[room:request_join] ${name} entrou em ${code}`);
     } catch (e: any) {
       socket.emit('error', e.message);
     }

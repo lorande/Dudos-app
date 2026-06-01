@@ -33,11 +33,16 @@ export function minOpeningQuantity(activeCount: number, face: Face, palificoActi
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
-export function isBidHigher(current: Bid | null, next: Bid): boolean {
+export function isBidHigher(current: Bid | null, next: Bid, palificoActive = false): boolean {
   if (!current) return true;
+  // Palafico: face travada, só aumenta quantidade.
+  if (palificoActive) {
+    return next.face === current.face && next.quantity > current.quantity;
+  }
   const curBico = current.face === WILD;
   const nextBico = next.face === WILD;
   if (!curBico && !nextBico) {
+    if (next.face < current.face) return false; // face não pode diminuir
     if (next.quantity > current.quantity) return true;
     if (next.quantity === current.quantity && next.face > current.face) return true;
     return false;
@@ -114,7 +119,7 @@ export function applyBid(state: ServerGameState, playerId: string, newBid: Bid):
     if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face, state.palificoActive)) {
       throw new Error('Aposta de abertura abaixo do mínimo');
     }
-  } else if (!isBidHigher(state.currentBid, newBid)) {
+  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive)) {
     throw new Error('Aposta deve ser maior');
   }
   return { ...state, currentBid: newBid, currentPlayerIndex: nextActiveIndex(state.players, state.currentPlayerIndex), pendingPasso: null };

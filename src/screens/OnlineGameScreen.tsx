@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useOnlineGameStore } from '../store/onlineGameStore';
-import { Face, Bid } from '../../packages/game-core/src';
+import { Face, Bid, availableBidFaces } from '../../packages/game-core/src';
 import RevealOverlay from '../components/RevealOverlay';
 import MesaSelector from '../components/MesaSelector';
 
@@ -32,6 +32,13 @@ export default function OnlineGameScreen({ navigation }: Props) {
     if (game.phase === 'round_end') setShowReveal(true);
     else setShowReveal(false);
   }, [game?.phase]);
+
+  // Mantém a face selecionada válida conforme a aposta atual.
+  useEffect(() => {
+    if (!game) return;
+    const faces = availableBidFaces(game.currentBid, game.rules.wildEnabled, game.palificoActive);
+    if (!faces.includes(bidFace)) setBidFace(faces[0]);
+  }, [game?.currentBid?.quantity, game?.currentBid?.face, game?.palificoActive]);
 
   if (!game) return null;
 
@@ -163,7 +170,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.facePicker}>
-              {([2, 3, 4, 5, 6, ...(game.rules.wildEnabled && !game.palificoActive ? [1] : [])] as Face[]).map((f) => (
+              {availableBidFaces(game.currentBid, game.rules.wildEnabled, game.palificoActive).map((f) => (
                 <TouchableOpacity
                   key={f}
                   style={[styles.faceBtn, bidFace === f && styles.faceBtnActive]}
