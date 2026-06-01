@@ -203,24 +203,35 @@ export function applyMesa(state: ServerGameState, playerId: string, indexesToSho
   return { ...state, players: state.players.map((p, i) => (i === idx ? updated : p)) };
 }
 
+// Re-sorteia os dados de todos, limpa a mesa e inicia a próxima rodada pelo perdedor.
+function startFreshRound(state: ServerGameState, players: ServerPlayer[], loserId: string | undefined): ServerGameState {
+  const updatedPlayers = players.map((p) =>
+    p.isEliminated ? p : { ...p, dice: rollDice(p.dice.length + p.tableDice.length), tableDice: [], usedPasso: false, usedMesa: false }
+  );
+  const palificoActive = isPalificoRound(updatedPlayers, state.rules);
+  const loserIdx = loserId ? updatedPlayers.findIndex((p) => p.id === loserId) : 0;
+  const startIdx = (loserIdx >= 0 && updatedPlayers[loserIdx]?.isEliminated) ? nextActiveIndex(updatedPlayers, loserIdx) : Math.max(0, loserIdx);
+  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, revealing: false, roundNumber: state.roundNumber + 1 };
+}
+
 export function applyManualDudo(state: ServerGameState, loserId: string): ServerGameState {
   if (state.phase !== 'bidding') throw new Error('Fora de fase');
   if (!state.players.some((p) => p.id === loserId && !p.isEliminated)) throw new Error('Perdedor inválido');
   const allDice = state.players.filter((p) => !p.isEliminated).flatMap((p) => [...p.dice, ...p.tableDice]);
   const reveal: RevealResult = { faceCounts: countFaces(allDice), wildCount: 0, bidFace: WILD, bidQuantity: 0, effectiveCount: 0, bidWasTrue: false, loserIds: [loserId], kind: 'manual' };
-  return finishRound(state, applyPenalty(state.players, reveal, state.rules), reveal);
+  const penalized = applyPenalty(state.players, reveal, state.rules);
+  const remaining = penalized.filter((p) => !p.isEliminated);
+  // Fim de jogo: mantém o resultado para a tela final.
+  if (remaining.length === 1) {
+    return { ...state, players: penalized, phase: 'game_over', lastReveal: reveal, winnerId: remaining[0].id, pendingPasso: null, revealing: false };
+  }
+  // Físico: re-sorteia os dados automaticamente e segue para a próxima rodada.
+  return startFreshRound(state, penalized, loserId);
 }
 
 export function applyNextRound(state: ServerGameState): ServerGameState {
   if (state.phase !== 'round_end') throw new Error('Não está em round_end');
-  const updatedPlayers = state.players.map((p) =>
-    p.isEliminated ? p : { ...p, dice: rollDice(p.dice.length + p.tableDice.length), tableDice: [], usedPasso: false, usedMesa: false }
-  );
-  const palificoActive = isPalificoRound(updatedPlayers, state.rules);
-  const loserId = state.lastReveal?.loserIds[0];
-  const loserIdx = loserId ? updatedPlayers.findIndex((p) => p.id === loserId) : 0;
-  const startIdx = (loserIdx >= 0 && updatedPlayers[loserIdx]?.isEliminated) ? nextActiveIndex(updatedPlayers, loserIdx) : Math.max(0, loserIdx);
-  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, revealing: false, roundNumber: state.roundNumber + 1 };
+  return startFreshRound(state, state.players, state.lastReveal?.loserIds[0]);
 }
 
 export function toPublicState(state: ServerGameState): PublicGameState {

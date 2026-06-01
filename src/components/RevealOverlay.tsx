@@ -12,9 +12,10 @@ interface Props {
   players: PlayerState[];
   palificoActive: boolean;
   onContinue: () => void;
+  waitingFor?: string; // se definido, mostra "Aguardando X…" no lugar do botão
 }
 
-export default function RevealOverlay({ reveal, players, palificoActive, onContinue }: Props) {
+export default function RevealOverlay({ reveal, players, palificoActive, onContinue, waitingFor }: Props) {
   const sfx = useSoundAndHaptics();
   const losers = players.filter((p) => reveal.loserIds.includes(p.id));
 
@@ -91,9 +92,13 @@ export default function RevealOverlay({ reveal, players, palificoActive, onConti
             {losers.map((p) => p.name).join(', ')} {losers.length === 1 ? 'perde' : 'perdem'} 1 {reveal.bidWasTrue ? 'vida/dado' : 'vida/dado'}!
           </Text>
 
-          <TouchableOpacity style={styles.continueBtn} onPress={onContinue}>
-            <Text style={styles.continueBtnText}>Próxima Rodada →</Text>
-          </TouchableOpacity>
+          {waitingFor ? (
+            <Text style={styles.waitingText}>Aguardando {waitingFor} reiniciar…</Text>
+          ) : (
+            <TouchableOpacity style={styles.continueBtn} onPress={onContinue}>
+              <Text style={styles.continueBtnText}>Próxima Rodada →</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
@@ -121,6 +126,7 @@ const styles = StyleSheet.create({
   verdictFalse: { backgroundColor: '#450a0a' },
   verdictText: { color: '#fff', fontSize: 15, fontWeight: '700', textAlign: 'center' },
   loserText: { color: '#fbbf24', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
+  waitingText: { color: '#94a3b8', fontSize: 15, textAlign: 'center', paddingVertical: 14 },
   continueBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 16, alignItems: 'center' },
   continueBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 });

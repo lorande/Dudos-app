@@ -45,11 +45,13 @@ describe('paridade do motor (servidor)', () => {
     expect(g.players[0].tableDice).toEqual([6, 6]);
     expect(() => applyPasso(g, 'a')).toThrow();
   });
-  it('manual dudo penaliza o escolhido', () => {
+  it('manual dudo penaliza o escolhido e reinicia a rodada (físico)', () => {
     let g = two();
     g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, { ...g.players[1], dice: [1, 1, 2, 2, 3] }] };
     const after = applyManualDudo(g, 'b');
-    expect(after.lastReveal?.kind).toBe('manual');
-    expect(after.players[1].dice).toHaveLength(4);
+    expect(after.phase).toBe('bidding');      // re-sorteia e segue
+    expect(after.lastReveal).toBeNull();
+    expect(after.players[1].dice).toHaveLength(4); // b perdeu 1 dado
+    expect(after.players[0].dice).toHaveLength(5);
   });
 });

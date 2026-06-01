@@ -45,10 +45,8 @@ io.on('connection', (socket) => {
     try {
       const room = requestJoin(socket.id, code, name);
       if (!room) { socket.emit('error', 'Sala não encontrada ou já iniciada'); return; }
-      socket.join(code);
-      socket.emit('room:join_result', { approved: true });
-      io.to(code).emit('room:joined', { code, players: getLobbyPlayers(code) });
-      console.log(`[room:request_join] ${name} entrou em ${code}`);
+      io.to(room.hostId).emit('room:pending_update', { pending: getPending(code) });
+      console.log(`[room:request_join] ${name} pediu entrada em ${code}`);
     } catch (e: any) {
       socket.emit('error', e.message);
     }
@@ -179,6 +177,12 @@ io.on('connection', (socket) => {
     try {
       const state = performManualDudo(socket.id, loserId);
       io.to(state.roomCode).emit('game:state', toPublicState(state));
+      // Físico re-sorteia os dados na hora — envia os novos dados privados.
+      if (state.phase === 'bidding') {
+        for (const player of state.players) {
+          if (!player.isEliminated) io.to(player.id).emit('game:your_dice', player.dice);
+        }
+      }
     } catch (e: any) {
       socket.emit('error', e.message);
     }
@@ -189,8 +193,11 @@ io.on('connection', (socket) => {
     try {
       const currentRoom = getRoomBySocket(socket.id);
       if (!currentRoom?.state) return;
-      // No físico qualquer jogador pode avançar (sem turnos de aposta); no online, só o host.
-      if (currentRoom.state.mode !== 'physical' && currentRoom.hostId !== socket.id) return;
+      // Online: quem perdeu a rodada é quem reinicia. Se o perdedor foi
+      // eliminado, qualquer jogador pode avançar.
+      const loserId = currentRoom.state.lastReveal?.loserIds[0];
+      const loser = currentRoom.state.players.find((p) => p.id === loserId);
+      if (loser && !loser.isEliminated && socket.id !== loserId) return;
       const state = performNextRound(socket.id);
       io.to(state.roomCode).emit('game:state', toPublicState(state));
       // Envia novos dados privados

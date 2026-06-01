@@ -44,7 +44,11 @@ export default function OnlineGameScreen({ navigation }: Props) {
 
   const isMyTurn = game.currentPlayerId === mySocketId;
   const myPlayer = game.players.find((p) => p.id === mySocketId);
-  const isHost = game.hostId === mySocketId;
+  // Quem reinicia a rodada é o perdedor (ou qualquer um, se ele foi eliminado).
+  const loserId = game.lastReveal?.loserIds?.[0];
+  const loser = game.players.find((p) => p.id === loserId);
+  const loserActive = !!loser && !loser.isEliminated;
+  const iCanRestart = !loserActive || loserId === mySocketId;
   const activePlayers = game.players.filter((p) => !p.isEliminated);
   const currentPlayer = game.players.find((p) => p.id === game.currentPlayerId);
 
@@ -58,7 +62,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
 
   function handleNextRound() {
     setShowReveal(false);
-    if (isHost) nextRound();
+    nextRound(); // qualquer jogador pode iniciar a próxima rodada
   }
 
   // Adapta lastReveal para o formato do RevealOverlay (que espera PlayerState com dice[])
@@ -214,13 +218,6 @@ export default function OnlineGameScreen({ navigation }: Props) {
             <Text style={styles.dudoBtnText}>DUDAR O PASSO de {game.players.find((p) => p.id === game.pendingPasso!.playerId)?.name}</Text>
           </TouchableOpacity>
         )}
-
-        {/* Aguardando host avançar rodada */}
-        {game.phase === 'round_end' && !isHost && (
-          <View style={styles.waitBanner}>
-            <Text style={styles.waitText}>Aguardando host iniciar próxima rodada…</Text>
-          </View>
-        )}
       </ScrollView>
 
       {showReveal && game.lastReveal && (
@@ -229,6 +226,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
           players={revealPlayers}
           palificoActive={game.palificoActive}
           onContinue={handleNextRound}
+          waitingFor={iCanRestart ? undefined : loser?.name}
         />
       )}
 
