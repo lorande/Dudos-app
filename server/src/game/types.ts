@@ -75,6 +75,7 @@ export interface ClientToServerEvents {
   'room:request_join': (payload: { code: string; name: string }) => void;
   'room:approve': (payload: { socketId: string }) => void;
   'room:reject': (payload: { socketId: string }) => void;
+  'room:close': () => void;
   'room:start': () => void;
   'room:reconnect': (payload: { code: string; name: string }) => void;
   'game:bid': (payload: { quantity: number; face: Face }) => void;
@@ -95,6 +96,7 @@ export interface ServerToClientEvents {
   'room:player_left': (payload: { id: string; name: string }) => void;
   'room:pending_update': (payload: { pending: { id: string; name: string }[] }) => void;
   'room:join_result': (payload: { approved: boolean }) => void;
+  'room:closed': () => void;
   'game:state': (state: PublicGameState) => void;
   'game:your_dice': (dice: Face[]) => void;
   'error': (msg: string) => void;

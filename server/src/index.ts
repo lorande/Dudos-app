@@ -6,7 +6,7 @@ import {
   createRoom, requestJoin, approveJoin, rejectJoin, getPending, startGame,
   performBid, performDudo, performPasso, performDudoPasso, performMesa,
   performManualDudo, performReveal, performNextRound, removeSocket, getLobbyPlayers,
-  reconnectToRoom, getRoomBySocket,
+  reconnectToRoom, getRoomBySocket, closeRoom,
 } from './rooms/roomManager';
 import { toPublicState } from './game/engine';
 import { ClientToServerEvents, ServerToClientEvents, Face } from './game/types';
@@ -88,6 +88,14 @@ io.on('connection', (socket) => {
     } catch (e: any) {
       socket.emit('error', e.message);
     }
+  });
+
+  // ── Fechar sala (host) ───────────────────────────────────────────────────────
+  socket.on('room:close', () => {
+    const result = closeRoom(socket.id);
+    if (!result) return;
+    for (const id of result.memberIds) io.to(id).emit('room:closed');
+    console.log(`[room:close] sala ${result.code} encerrada pelo host`);
   });
 
   // ── Iniciar partida ─────────────────────────────────────────────────────────

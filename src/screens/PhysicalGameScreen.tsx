@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PhysicalGame'>;
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function PhysicalGameScreen({ navigation }: Props) {
-  const { game, mySocketId, myDice, mesa, revealAll, resolveDudo, nextRound, disconnect } = useOnlineGameStore();
+  const { game, mySocketId, myDice, roomClosed, mesa, revealAll, resolveDudo, nextRound, closeRoom, disconnect } = useOnlineGameStore();
 
   const [showReveal, setShowReveal] = useState(false);
   const [showMesa, setShowMesa] = useState(false);
@@ -27,6 +27,14 @@ export default function PhysicalGameScreen({ navigation }: Props) {
     if (game.phase === 'round_end') setShowReveal(true);
     else setShowReveal(false);
   }, [game?.phase]);
+
+  useEffect(() => {
+    if (roomClosed) {
+      Alert.alert('Sala encerrada', 'A sala foi encerrada pelo host.');
+      disconnect();
+      navigation.replace('Home');
+    }
+  }, [roomClosed]);
 
   if (!game) return null;
 
@@ -114,9 +122,15 @@ export default function PhysicalGameScreen({ navigation }: Props) {
           </View>
         )}
 
-        <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>
-          <Text style={styles.leaveBtnText}>Sair</Text>
-        </TouchableOpacity>
+        {game.hostId === mySocketId ? (
+          <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
+            <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>
+            <Text style={styles.leaveBtnText}>Sair</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Após Dudar: contagem revelada a todos + atribuição do perdedor */}

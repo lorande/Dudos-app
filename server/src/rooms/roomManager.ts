@@ -70,6 +70,16 @@ export function getPending(code: string): { id: string; name: string }[] {
   return [...room.pending.entries()].map(([id, name]) => ({ id, name }));
 }
 
+// Host encerra a sala: remove a sala e retorna todos os sockets envolvidos.
+export function closeRoom(hostId: string): { code: string; memberIds: string[] } | null {
+  const room = getRoomBySocket(hostId);
+  if (!room || room.hostId !== hostId) return null;
+  const memberIds = [...room.playerNames.keys(), ...room.pending.keys()];
+  for (const id of memberIds) socketRoomMap.delete(id);
+  rooms.delete(room.code);
+  return { code: room.code, memberIds };
+}
+
 export function reconnectToRoom(socketId: string, code: string, name: string): RoomMeta | null {
   const room = rooms.get(code);
   if (!room) return null;

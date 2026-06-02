@@ -43,6 +43,7 @@ interface OnlineGameStore {
   lobbyPlayers: { id: string; name: string }[];
   pending: { id: string; name: string }[];
   joinStatus: JoinStatus;
+  roomClosed: boolean;
   game: PublicGameState | null;
   error: string | null;
   connected: boolean;
@@ -53,6 +54,7 @@ interface OnlineGameStore {
   approve: (socketId: string) => void;
   reject: (socketId: string) => void;
   startGame: () => void;
+  closeRoom: () => void;
   bid: (quantity: number, face: Face) => void;
   dudo: () => void;
   passo: () => void;
@@ -74,6 +76,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   lobbyPlayers: [],
   pending: [],
   joinStatus: 'idle',
+  roomClosed: false,
   game: null,
   error: null,
   connected: false,
@@ -100,6 +103,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
     socket.on('room:join_result', ({ approved }) =>
       set({ joinStatus: approved ? 'approved' : 'rejected' })
     );
+    socket.on('room:closed', () => set({ roomClosed: true }));
     socket.on('game:state', (state) => set({ game: state as PublicGameState }));
     socket.on('game:your_dice', (dice) => set({ myDice: dice }));
     socket.on('error', (msg) => set({ error: msg }));
@@ -119,6 +123,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   reject: (socketId) => getSocket().emit('room:reject', { socketId }),
 
   startGame: () => getSocket().emit('room:start'),
+  closeRoom: () => getSocket().emit('room:close'),
 
   bid: (quantity, face) => getSocket().emit('game:bid', { quantity, face }),
   dudo: () => getSocket().emit('game:dudo'),
@@ -131,7 +136,7 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
 
   disconnect: () => {
     disconnectSocket();
-    set({ roomCode: null, amHost: false, myDice: [], lobbyPlayers: [], pending: [], joinStatus: 'idle', game: null, connected: false });
+    set({ roomCode: null, amHost: false, myDice: [], lobbyPlayers: [], pending: [], joinStatus: 'idle', roomClosed: false, game: null, connected: false });
   },
 
   clearError: () => set({ error: null }),

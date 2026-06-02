@@ -15,8 +15,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'OnlineLobby'>;
 export default function OnlineLobbyScreen({ navigation, route }: Props) {
   const mode = route.params?.mode ?? 'online';
   const {
-    roomCode, mySocketId, amHost, lobbyPlayers, pending, joinStatus, game, error,
-    connect, createRoom, requestJoin, approve, reject, startGame, disconnect, clearError,
+    roomCode, mySocketId, amHost, lobbyPlayers, pending, joinStatus, roomClosed, game, error,
+    connect, createRoom, requestJoin, approve, reject, startGame, closeRoom, disconnect, clearError,
   } = useOnlineGameStore();
   const { templates, loadTemplates } = useGameStore();
 
@@ -46,6 +46,14 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
       navigation.replace(game.mode === 'physical' ? 'PhysicalGame' : 'OnlineGame');
     }
   }, [game?.phase]);
+
+  useEffect(() => {
+    if (roomClosed) {
+      Alert.alert('Sala encerrada', 'A sala foi encerrada pelo host.');
+      disconnect();
+      navigation.navigate('Home');
+    }
+  }, [roomClosed]);
 
   const isHost = amHost;
   const title = mode === 'physical' ? 'Modo Físico' : 'Jogar Online';
@@ -123,9 +131,15 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
           )}
           {!isHost && <Text style={styles.waitText}>Aguardando o host iniciar…</Text>}
 
-          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
-            <Text style={styles.leaveBtnText}>Sair da sala</Text>
-          </TouchableOpacity>
+          {isHost ? (
+            <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
+              <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
+              <Text style={styles.leaveBtnText}>Sair da sala</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </SafeAreaView>
     );

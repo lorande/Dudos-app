@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'OnlineGame'>;
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function OnlineGameScreen({ navigation }: Props) {
-  const { game, mySocketId, myDice, bid, dudo, passo, dudoPasso, mesa, nextRound, disconnect } = useOnlineGameStore();
+  const { game, mySocketId, myDice, roomClosed, bid, dudo, passo, dudoPasso, mesa, nextRound, closeRoom, disconnect } = useOnlineGameStore();
 
   const [bidQty, setBidQty] = useState(1);
   const [bidFace, setBidFace] = useState<Face>(2);
@@ -32,6 +32,14 @@ export default function OnlineGameScreen({ navigation }: Props) {
     if (game.phase === 'round_end') setShowReveal(true);
     else setShowReveal(false);
   }, [game?.phase]);
+
+  useEffect(() => {
+    if (roomClosed) {
+      Alert.alert('Sala encerrada', 'A sala foi encerrada pelo host.');
+      disconnect();
+      navigation.replace('Home');
+    }
+  }, [roomClosed]);
 
   // Mantém a face selecionada válida conforme a aposta atual.
   useEffect(() => {
@@ -218,6 +226,16 @@ export default function OnlineGameScreen({ navigation }: Props) {
             <Text style={styles.dudoBtnText}>DUDAR O PASSO de {game.players.find((p) => p.id === game.pendingPasso!.playerId)?.name}</Text>
           </TouchableOpacity>
         )}
+
+        {game.hostId === mySocketId ? (
+          <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
+            <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>
+            <Text style={styles.leaveBtnText}>Sair</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {showReveal && game.lastReveal && (
@@ -255,6 +273,8 @@ const styles = StyleSheet.create({
   specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
   specialBtnDisabled: { opacity: 0.4 },
   specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
+  leaveBtn: { borderWidth: 1, borderColor: '#dc2626', borderRadius: 12, padding: 12, alignItems: 'center', marginTop: 12 },
+  leaveBtnText: { color: '#dc2626', fontSize: 15 },
   dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
   myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },
   myDiceLabel: { color: '#f5c518', fontSize: 13, fontWeight: '700', marginBottom: 10 },

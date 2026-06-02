@@ -26,6 +26,15 @@ export default function SettingsScreen() {
     setTemplateName('');
   }
 
+  function handleUpdate() {
+    // Na web, recarrega a página para buscar o bundle mais recente.
+    if (typeof window !== 'undefined' && window.location?.reload) {
+      window.location.reload();
+    } else {
+      Alert.alert('Atualizar', 'Feche e reabra o app para atualizar.');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -36,6 +45,14 @@ export default function SettingsScreen() {
             <Text style={styles.toggleLabel}>Efeitos sonoros</Text>
             <Switch value={soundEnabled} onValueChange={setSoundEnabled} trackColor={{ true: '#7c3aed' }} />
           </View>
+        </Section>
+
+        {/* Atualizar */}
+        <Section title="Aplicativo">
+          <Text style={styles.sub}>Recarrega o app para obter a versão mais recente.</Text>
+          <TouchableOpacity style={styles.saveBtn} onPress={handleUpdate}>
+            <Text style={styles.saveBtnText}>🔄 Atualizar</Text>
+          </TouchableOpacity>
         </Section>
 
         {/* Criar template de regras */}
