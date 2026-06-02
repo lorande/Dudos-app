@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useGameStore } from '../store/gameStore';
-import { Face, Bid, availableBidFaces } from '../../packages/game-core/src';
+import { Face, Bid, availableBidFaces, minBidQuantity } from '../../packages/game-core/src';
 import MesaSelector from '../components/MesaSelector';
 import RevealOverlay from '../components/RevealOverlay';
 import AnimatedDie from '../components/AnimatedDie';
@@ -50,9 +50,16 @@ export default function GameScreen({ navigation, route }: Props) {
   // Garante que a face selecionada continua válida quando a aposta atual muda.
   useEffect(() => {
     if (!game) return;
-    const faces = availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive);
+    const faces = availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive, game.faceBeforeBico);
     if (!faces.includes(bidFace)) setBidFace(faces[0]);
   }, [game?.currentBid?.quantity, game?.currentBid?.face, game?.palificoActive]);
+
+  // Quantidade mínima conforme a face escolhida (não permite abaixar).
+  const activeCount = game ? game.players.filter((p) => !p.isEliminated).length : 0;
+  const minQty = game ? minBidQuantity(game.currentBid, bidFace, activeCount, game.palificoActive) : 1;
+  useEffect(() => {
+    if (bidQty < minQty) setBidQty(minQty);
+  }, [minQty]);
 
   if (!game) return null;
 
@@ -161,7 +168,7 @@ export default function GameScreen({ navigation, route }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>Quantidade</Text>
               <View style={styles.pickerButtons}>
-                <TouchableOpacity style={styles.pickerBtn} onPress={() => setBidQty((q) => Math.max(1, q - 1))}>
+                <TouchableOpacity style={styles.pickerBtn} onPress={() => setBidQty((q) => Math.max(minQty, q - 1))}>
                   <Text style={styles.pickerBtnText}>−</Text>
                 </TouchableOpacity>
                 <Text style={styles.pickerValue}>{bidQty}</Text>
@@ -175,7 +182,7 @@ export default function GameScreen({ navigation, route }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>Face</Text>
               <View style={styles.facePicker}>
-                {availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive).map((f) => (
+                {availableBidFaces(game.currentBid, rules.wildEnabled, game.palificoActive, game.faceBeforeBico).map((f) => (
                   <TouchableOpacity
                     key={f}
                     style={[styles.faceBtn, bidFace === f && styles.faceBtnActive]}

@@ -26,6 +26,7 @@ export interface PublicGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  faceBeforeBico: Face | null;
   revealing: boolean;
   roundNumber: number;
   hostId: string;

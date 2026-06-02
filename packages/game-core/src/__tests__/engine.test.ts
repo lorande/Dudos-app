@@ -298,3 +298,23 @@ describe('nextRound reseta estado especial', () => {
     expect(after.pendingPasso).toBeNull();
   });
 });
+
+import { isBidHigher as ibh, minBidQuantity } from '../engine';
+
+describe('sair do bico: face >= face antes do bico', () => {
+  it('exige 2Y+1 e face >= faceBeforeBico', () => {
+    // current bico (Y=2), face antes do bico = 5
+    expect(ibh({ quantity: 2, face: 1 }, { quantity: 5, face: 5 }, false, 5)).toBe(true);
+    expect(ibh({ quantity: 2, face: 1 }, { quantity: 5, face: 4 }, false, 5)).toBe(false); // face menor
+    expect(ibh({ quantity: 2, face: 1 }, { quantity: 4, face: 6 }, false, 5)).toBe(false); // qtd < 2Y+1
+  });
+});
+
+describe('minBidQuantity', () => {
+  it('mesma face = q+1; face maior = q; bico = teto(q/2); sair do bico = 2Y+1', () => {
+    expect(minBidQuantity({ quantity: 5, face: 4 }, 4, 4, false)).toBe(6);
+    expect(minBidQuantity({ quantity: 5, face: 4 }, 5, 4, false)).toBe(5);
+    expect(minBidQuantity({ quantity: 5, face: 4 }, 1, 4, false)).toBe(3);
+    expect(minBidQuantity({ quantity: 2, face: 1 }, 5, 4, false)).toBe(5);
+  });
+});

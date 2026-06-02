@@ -82,5 +82,6 @@ export interface GameState {
   winnerId: string | null;
   palificoActive: boolean; // true quando algum jogador com 1 dado está na rodada
   pendingPasso: { playerId: string } | null; // Passo aguardando possível Dudo
+  faceBeforeBico: Face | null; // face antes de entrar no bico (para sair do bico)
   roundNumber: number;
 }

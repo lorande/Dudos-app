@@ -63,6 +63,7 @@ export interface ServerGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  faceBeforeBico: Face | null; // face antes de entrar no bico
   revealing: boolean; // físico: contagem revelada, aguardando atribuição do perdedor
   roundNumber: number;
   hostId: string;
@@ -125,6 +126,7 @@ export interface PublicGameState {
   winnerId: string | null;
   palificoActive: boolean;
   pendingPasso: { playerId: string } | null;
+  faceBeforeBico: Face | null; // face antes de entrar no bico
   revealing: boolean; // físico: contagem revelada, aguardando atribuição do perdedor
   roundNumber: number;
   hostId: string;

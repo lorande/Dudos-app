@@ -189,6 +189,7 @@ export function initGame(
     winnerId: null,
     palificoActive: isPalificoRound(fullPlayers, rules),
     pendingPasso: null,
+    faceBeforeBico: null,
     roundNumber: 1,
   };
 }
@@ -206,7 +207,7 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
     if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face, state.palificoActive)) {
       throw new Error('Aposta de abertura abaixo do mínimo');
     }
-  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive)) {
+  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive, state.faceBeforeBico)) {
     throw new Error('Aposta deve ser maior que a atual');
   }
 
@@ -215,7 +216,15 @@ export function bid(state: GameState, playerId: string, newBid: Bid): GameState 
     currentBid: newBid,
     currentPlayerIndex: nextActiveIndex(state, state.currentPlayerIndex),
     pendingPasso: null,
+    faceBeforeBico: nextFaceBeforeBico(state.currentBid, newBid, state.faceBeforeBico),
   };
+}
+
+// Lembra a face normal anterior quando se entra no bico (para validar a saída do bico).
+function nextFaceBeforeBico(current: Bid | null, next: Bid, prev: Face | null): Face | null {
+  if (next.face !== WILD) return null; // voltou para face normal → limpa
+  if (current && current.face !== WILD) return current.face; // entrou no bico vindo de face normal
+  return prev; // bico→bico (ou abertura em bico) mantém
 }
 
 export function minOpeningQuantity(activeCount: number, face: Face, palificoActive = false): number {
@@ -223,7 +232,29 @@ export function minOpeningQuantity(activeCount: number, face: Face, palificoActi
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
-export function isBidHigher(current: Bid | null, next: Bid, palificoActive = false): boolean {
+// Quantidade mínima válida para a face escolhida, dada a aposta atual.
+export function minBidQuantity(
+  current: Bid | null,
+  face: Face,
+  activeCount: number,
+  palificoActive: boolean
+): number {
+  if (!current) return minOpeningQuantity(activeCount, face, palificoActive);
+  if (palificoActive) return current.quantity + 1;
+  const curBico = current.face === WILD;
+  const nextBico = face === WILD;
+  if (curBico && nextBico) return current.quantity + 1;
+  if (!curBico && nextBico) return Math.ceil(current.quantity / 2);
+  if (curBico && !nextBico) return 2 * current.quantity + 1;
+  return face > current.face ? current.quantity : current.quantity + 1;
+}
+
+export function isBidHigher(
+  current: Bid | null,
+  next: Bid,
+  palificoActive = false,
+  faceBeforeBico: Face | null = null
+): boolean {
   if (!current) return true;
 
   // Palafico: a face fica travada — só pode aumentar a quantidade.
@@ -245,7 +276,10 @@ export function isBidHigher(current: Bid | null, next: Bid, palificoActive = fal
     return next.quantity >= Math.ceil(current.quantity / 2);
   }
   if (curBico && !nextBico) {
-    return next.quantity >= 2 * current.quantity + 1;
+    // Sair do bico: quantidade ≥ 2Y+1 E face ≥ face anterior ao bico.
+    if (next.quantity < 2 * current.quantity + 1) return false;
+    if (faceBeforeBico != null && next.face < faceBeforeBico) return false;
+    return true;
   }
   return next.quantity > current.quantity; // bico -> bico
 }
@@ -254,7 +288,8 @@ export function isBidHigher(current: Bid | null, next: Bid, palificoActive = fal
 export function availableBidFaces(
   current: Bid | null,
   wildEnabled: boolean,
-  palificoActive: boolean
+  palificoActive: boolean,
+  faceBeforeBico: Face | null = null
 ): Face[] {
   if (palificoActive) {
     // Palafico: o bico não é coringa, mas pode ser apostado como face literal.
@@ -262,8 +297,14 @@ export function availableBidFaces(
     return current ? [current.face] : ([1, 2, 3, 4, 5, 6] as Face[]);
   }
   const bico: Face[] = wildEnabled ? [WILD] : [];
-  if (!current || current.face === WILD) {
+  if (!current) {
     return ([2, 3, 4, 5, 6] as Face[]).concat(bico);
+  }
+  if (current.face === WILD) {
+    // Saindo do bico: faces ≥ face anterior ao bico.
+    const minF = faceBeforeBico ?? 2;
+    const normals = ([2, 3, 4, 5, 6] as Face[]).filter((f) => f >= minF);
+    return normals.concat(bico);
   }
   // Face normal atual: não pode diminuir a face.
   const normals = ([2, 3, 4, 5, 6] as Face[]).filter((f) => f >= current.face);
@@ -389,6 +430,7 @@ export function nextRound(state: GameState): GameState {
     lastReveal: null,
     palificoActive,
     pendingPasso: null,
+    faceBeforeBico: null,
     roundNumber: state.roundNumber + 1,
   };
 }

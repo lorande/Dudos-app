@@ -57,7 +57,7 @@ export function botDecide(
   }
 
   // Formular nova aposta
-  const newBid = formulateBid(currentBid, [...bot.dice, ...bot.tableDice], totalDice, p, level, state.palificoActive, activeCount, wildEnabled);
+  const newBid = formulateBid(currentBid, [...bot.dice, ...bot.tableDice], totalDice, p, level, state.palificoActive, activeCount, wildEnabled, state.faceBeforeBico);
   return { action: 'bid', bid: newBid };
 }
 
@@ -69,7 +69,8 @@ function formulateBid(
   level: BotLevel,
   palificoActive: boolean,
   activeCount: number,
-  wildActive: boolean
+  wildActive: boolean,
+  faceBeforeBico: Face | null
 ): Bid {
   // O bico (face 1) só é apostável quando o coringa está ativo e fora do palafico.
   const faces: Face[] = wildActive ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6];
@@ -99,12 +100,12 @@ function formulateBid(
 
   // Continuação: garante que é uma aposta válida.
   let candidate: Bid = { quantity, face };
-  if (isBidHigher(current, candidate, palificoActive)) return candidate;
+  if (isBidHigher(current, candidate, palificoActive, faceBeforeBico)) return candidate;
 
   // Sobe a quantidade até virar válida (limite de segurança).
   for (let q = current.quantity; q <= current.quantity + totalDice + 2; q++) {
     candidate = { quantity: q, face };
-    if (isBidHigher(current, candidate, palificoActive)) return candidate;
+    if (isBidHigher(current, candidate, palificoActive, faceBeforeBico)) return candidate;
   }
   // Fallback final: +1 na quantidade da face atual.
   return { quantity: current.quantity + 1, face: current.face };

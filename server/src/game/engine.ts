@@ -33,23 +33,37 @@ export function minOpeningQuantity(activeCount: number, face: Face, palificoActi
   return face === WILD ? activeCount - 1 : 2 * activeCount - 2;
 }
 
-export function isBidHigher(current: Bid | null, next: Bid, palificoActive = false): boolean {
+export function isBidHigher(
+  current: Bid | null,
+  next: Bid,
+  palificoActive = false,
+  faceBeforeBico: Face | null = null
+): boolean {
   if (!current) return true;
-  // Palafico: face travada, só aumenta quantidade.
   if (palificoActive) {
     return next.face === current.face && next.quantity > current.quantity;
   }
   const curBico = current.face === WILD;
   const nextBico = next.face === WILD;
   if (!curBico && !nextBico) {
-    if (next.face < current.face) return false; // face não pode diminuir
+    if (next.face < current.face) return false;
     if (next.quantity > current.quantity) return true;
     if (next.quantity === current.quantity && next.face > current.face) return true;
     return false;
   }
   if (!curBico && nextBico) return next.quantity >= Math.ceil(current.quantity / 2);
-  if (curBico && !nextBico) return next.quantity >= 2 * current.quantity + 1;
+  if (curBico && !nextBico) {
+    if (next.quantity < 2 * current.quantity + 1) return false;
+    if (faceBeforeBico != null && next.face < faceBeforeBico) return false;
+    return true;
+  }
   return next.quantity > current.quantity;
+}
+
+function nextFaceBeforeBico(current: Bid | null, next: Bid, prev: Face | null): Face | null {
+  if (next.face !== WILD) return null;
+  if (current && current.face !== WILD) return current.face;
+  return prev;
 }
 
 export function initServerGame(
@@ -74,7 +88,7 @@ export function initServerGame(
     currentBid: null, currentPlayerIndex: 0, phase: 'bidding',
     lastReveal: null, winnerId: null,
     palificoActive: isPalificoRound(fullPlayers, rules),
-    pendingPasso: null, revealing: false, roundNumber: 1, hostId, mode,
+    pendingPasso: null, faceBeforeBico: null, revealing: false, roundNumber: 1, hostId, mode,
   };
 }
 
@@ -119,10 +133,15 @@ export function applyBid(state: ServerGameState, playerId: string, newBid: Bid):
     if (newBid.quantity < minOpeningQuantity(activeCount, newBid.face, state.palificoActive)) {
       throw new Error('Aposta de abertura abaixo do mínimo');
     }
-  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive)) {
+  } else if (!isBidHigher(state.currentBid, newBid, state.palificoActive, state.faceBeforeBico)) {
     throw new Error('Aposta deve ser maior');
   }
-  return { ...state, currentBid: newBid, currentPlayerIndex: nextActiveIndex(state.players, state.currentPlayerIndex), pendingPasso: null };
+  return {
+    ...state, currentBid: newBid,
+    currentPlayerIndex: nextActiveIndex(state.players, state.currentPlayerIndex),
+    pendingPasso: null,
+    faceBeforeBico: nextFaceBeforeBico(state.currentBid, newBid, state.faceBeforeBico),
+  };
 }
 
 function resolveChallenge(state: ServerGameState): RevealResult {
@@ -211,7 +230,7 @@ function startFreshRound(state: ServerGameState, players: ServerPlayer[], loserI
   const palificoActive = isPalificoRound(updatedPlayers, state.rules);
   const loserIdx = loserId ? updatedPlayers.findIndex((p) => p.id === loserId) : 0;
   const startIdx = (loserIdx >= 0 && updatedPlayers[loserIdx]?.isEliminated) ? nextActiveIndex(updatedPlayers, loserIdx) : Math.max(0, loserIdx);
-  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, revealing: false, roundNumber: state.roundNumber + 1 };
+  return { ...state, players: updatedPlayers, currentBid: null, currentPlayerIndex: startIdx, phase: 'bidding', lastReveal: null, palificoActive, pendingPasso: null, faceBeforeBico: null, revealing: false, roundNumber: state.roundNumber + 1 };
 }
 
 export function applyManualDudo(state: ServerGameState, loserId: string): ServerGameState {
@@ -243,6 +262,6 @@ export function toPublicState(state: ServerGameState): PublicGameState {
     roomCode: state.roomCode, rules: state.rules, players,
     currentBid: state.currentBid, currentPlayerId: state.players[state.currentPlayerIndex]?.id ?? null,
     phase: state.phase, lastReveal: state.lastReveal, winnerId: state.winnerId,
-    palificoActive: state.palificoActive, pendingPasso: state.pendingPasso, revealing: state.revealing, roundNumber: state.roundNumber, hostId: state.hostId, mode: state.mode,
+    palificoActive: state.palificoActive, pendingPasso: state.pendingPasso, faceBeforeBico: state.faceBeforeBico, revealing: state.revealing, roundNumber: state.roundNumber, hostId: state.hostId, mode: state.mode,
   };
 }
