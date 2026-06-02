@@ -79,6 +79,11 @@ export default function PhysicalGameScreen({ navigation }: Props) {
             <View style={styles.diceRow}>
               {myDice.map((d, i) => <Text key={i} style={styles.die}>{DICE_FACE[d]}</Text>)}
             </View>
+            {myDice.length > 0 && new Set(myDice).size === myDice.length && (
+              <View style={styles.distinctBox}>
+                <Text style={styles.distinctText}>✓ Suas faces são todas distintas (pode declarar Passo)</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -124,7 +129,7 @@ export default function PhysicalGameScreen({ navigation }: Props) {
 
         {game.hostId === mySocketId ? (
           <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
-            <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+            <Text style={styles.leaveBtnText}>Encerrar sala</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>
@@ -174,6 +179,8 @@ const styles = StyleSheet.create({
   tableDice: { color: '#c084fc', fontSize: 13, marginTop: 2 },
   myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },
   myDiceLabel: { color: '#f5c518', fontSize: 13, fontWeight: '700', marginBottom: 10 },
+  distinctBox: { marginTop: 10, backgroundColor: '#14532d', borderRadius: 8, padding: 8 },
+  distinctText: { color: '#86efac', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   diceRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   die: { fontSize: 40 },
   palificoBanner: { backgroundColor: '#3b0764', borderRadius: 8, padding: 10, alignItems: 'center' },

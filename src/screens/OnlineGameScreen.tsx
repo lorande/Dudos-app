@@ -235,7 +235,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
 
         {game.hostId === mySocketId ? (
           <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
-            <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+            <Text style={styles.leaveBtnText}>Encerrar sala</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.replace('Home'); }}>

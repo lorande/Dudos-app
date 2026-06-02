@@ -133,7 +133,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
 
           {isHost ? (
             <TouchableOpacity style={styles.leaveBtn} onPress={closeRoom}>
-              <Text style={styles.leaveBtnText}>Encerrar sala (todos saem)</Text>
+              <Text style={styles.leaveBtnText}>Encerrar sala</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
@@ -188,6 +188,10 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
           </>
         )}
 
+        {tab === 'create' && templates.length === 0 && (
+          <Text style={styles.tip}>💡 Crie templates de regras (vidas/dados, Mesa, Passo) em Configurações ⚙️. Sem template, usa as regras padrão.</Text>
+        )}
+
         {tab === 'create' && templates.length > 0 && (
           <>
             <Text style={styles.label}>Regras (template)</Text>
@@ -197,9 +201,9 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
                   key={t.id}
                   style={[
                     styles.templateChip,
-                    JSON.stringify(selectedRules) === JSON.stringify(t.rules) && styles.templateChipActive,
+                    JSON.stringify(selectedRules) === JSON.stringify({ ...DEFAULT_RULES, ...t.rules }) && styles.templateChipActive,
                   ]}
-                  onPress={() => setSelectedRules(t.rules)}
+                  onPress={() => setSelectedRules({ ...DEFAULT_RULES, ...t.rules })}
                 >
                   <Text style={styles.templateChipText}>{t.name}</Text>
                 </TouchableOpacity>
@@ -245,6 +249,7 @@ const styles = StyleSheet.create({
   tabText: { color: '#aaa', fontSize: 15, fontWeight: '600' },
   tabTextActive: { color: '#fff' },
   label: { color: '#aaa', fontSize: 13, marginBottom: 4 },
+  tip: { color: '#888', fontSize: 13, lineHeight: 19, marginBottom: 4 },
   input: { backgroundColor: '#2d1b4e', color: '#fff', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#4a2e7a', fontSize: 16 },
   codeInput: { fontSize: 28, fontWeight: '900', textAlign: 'center', letterSpacing: 8 },
   templateList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

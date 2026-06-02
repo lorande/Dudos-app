@@ -124,7 +124,10 @@ export const useOnlineGameStore = create<OnlineGameStore>((set, get) => ({
   reject: (socketId) => getSocket().emit('room:reject', { socketId }),
 
   startGame: () => getSocket().emit('room:start'),
-  closeRoom: () => getSocket().emit('room:close'),
+  closeRoom: () => {
+    getSocket().emit('room:close');
+    set({ roomClosed: true }); // encerra localmente para o host imediatamente
+  },
 
   bid: (quantity, face) => getSocket().emit('game:bid', { quantity, face }),
   dudo: () => getSocket().emit('game:dudo'),
