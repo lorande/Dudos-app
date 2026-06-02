@@ -199,12 +199,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
             {/* Regras especiais */}
             <View style={styles.specialRow}>
               {game.rules.passoEnabled && !myPlayer?.usedPasso && !myPlayer?.usedMesa && (
-                <TouchableOpacity
-                  style={[styles.specialBtn, !(myDice.length === 5 && new Set(myDice).size === 5) && styles.specialBtnDisabled]}
-                  onPress={() => (myDice.length === 5 && new Set(myDice).size === 5)
-                    ? passo()
-                    : Alert.alert('Passo', 'Você precisa ter 5 faces diferentes para passar.')}
-                >
+                <TouchableOpacity style={styles.specialBtn} onPress={passo}>
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>
               )}

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Alert,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useGameStore } from '../store/gameStore';
-import { Face, Bid, hasFiveDistinct, availableBidFaces } from '../../packages/game-core/src';
+import { Face, Bid, availableBidFaces } from '../../packages/game-core/src';
 import MesaSelector from '../components/MesaSelector';
 import RevealOverlay from '../components/RevealOverlay';
 import AnimatedDie from '../components/AnimatedDie';
@@ -200,12 +200,7 @@ export default function GameScreen({ navigation, route }: Props) {
 
             <View style={styles.specialRow}>
               {game.rules.passoEnabled && !human.usedPasso && !human.usedMesa && (
-                <TouchableOpacity
-                  style={[styles.specialBtn, !hasFiveDistinct(human) && styles.specialBtnDisabled]}
-                  onPress={() => hasFiveDistinct(human)
-                    ? handlePasso()
-                    : Alert.alert('Passo', 'Você precisa ter 5 faces diferentes para passar.')}
-                >
+                <TouchableOpacity style={styles.specialBtn} onPress={handlePasso}>
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>
               )}

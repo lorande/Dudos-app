@@ -163,7 +163,7 @@ export function applyPasso(state: ServerGameState, playerId: string): ServerGame
   if (player.id !== playerId) throw new Error('Não é sua vez');
   if (player.usedPasso) throw new Error('Passo já usado');
   if (player.usedMesa) throw new Error('Mesa bloqueia o Passo');
-  if (!hasFiveDistinct(player)) throw new Error('Passo exige 5 dados distintos');
+  // Blefe permitido: a distinção só é verificada se o Passo for dudado.
   const players = state.players.map((p) => (p.id === playerId ? { ...p, usedPasso: true } : p));
   return { ...state, players, currentPlayerIndex: nextActiveIndex(state.players, state.currentPlayerIndex), pendingPasso: { playerId } };
 }

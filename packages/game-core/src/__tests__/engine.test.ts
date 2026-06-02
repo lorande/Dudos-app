@@ -186,19 +186,26 @@ describe('passo / dudoPasso', () => {
     expect(after.pendingPasso).toEqual({ playerId: 'a' });
     expect(after.currentPlayerIndex).toBe(1);
   });
-  it('passo rejeitado sem 5 distintos', () => {
+  it('passo é permitido mesmo com faces repetidas (blefe)', () => {
     let g = twoPlayers();
     g = { ...g, players: [{ ...g.players[0], dice: [1, 1, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
-    expect(() => passo(g, 'a')).toThrow();
+    expect(() => passo(g, 'a')).not.toThrow();
   });
-  it('dudoPasso: passador honesto faz o duvidador perder', () => {
+  it('dudoPasso: passador honesto (distinto) faz o duvidador perder', () => {
     let g = twoPlayers();
     g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
     g = passo(g, 'a'); // turno vai para b
     const after = dudoPasso(g, 'b');
-    expect(after.lastReveal?.kind).toBe('passo');
     expect(after.lastReveal?.passoWasDistinct).toBe(true);
-    expect(after.lastReveal?.loserIds).toContain('b');
+    expect(after.lastReveal?.loserIds).toContain('b'); // quem dudou perde
+  });
+  it('dudoPasso: blefe (faces repetidas) faz o passador perder', () => {
+    let g = twoPlayers();
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 1, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
+    g = passo(g, 'a');
+    const after = dudoPasso(g, 'b');
+    expect(after.lastReveal?.passoWasDistinct).toBe(false);
+    expect(after.lastReveal?.loserIds).toContain('a'); // o passador perde
   });
 });
 

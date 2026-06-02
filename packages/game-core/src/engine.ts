@@ -68,7 +68,8 @@ export function passo(state: GameState, playerId: string): GameState {
   if (player.id !== playerId) throw new Error('Não é a vez deste jogador');
   if (player.usedPasso) throw new Error('Passo já usado nesta rodada');
   if (player.usedMesa) throw new Error('Mesa usada bloqueia o Passo');
-  if (!hasFiveDistinct(player)) throw new Error('Passo exige 5 dados distintos');
+  // O Passo é um blefe: pode ser declarado mesmo com faces repetidas.
+  // A distinção só é checada se outro jogador dudar o Passo.
 
   const players = state.players.map((p) =>
     p.id === playerId ? { ...p, usedPasso: true } : p
