@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useSettingsStore } from '../store/settingsStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
+  const loadSettings = useSettingsStore((s) => s.loadSettings);
+  useEffect(() => { loadSettings(); }, []);
+
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.settingsBtn} onPress={() => navigation.navigate('Settings')}>
+        <Text style={styles.settingsIcon}>⚙️</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <Text style={styles.title}>DUDOS</Text>
         <Text style={styles.subtitle}>Jogo de Blefe</Text>
@@ -56,6 +63,8 @@ function MenuButton({ label, emoji, onPress }: { label: string; emoji: string; o
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a0a2e' },
+  settingsBtn: { position: 'absolute', top: 16, right: 20, zIndex: 10, padding: 8 },
+  settingsIcon: { fontSize: 28 },
   header: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 64, fontWeight: '900', color: '#f5c518', letterSpacing: 8 },
   subtitle: { fontSize: 18, color: '#aaa', marginTop: 4 },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView,
+  ScrollView, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -199,8 +199,13 @@ export default function GameScreen({ navigation, route }: Props) {
             </View>
 
             <View style={styles.specialRow}>
-              {game.rules.passoEnabled && hasFiveDistinct(human) && !human.usedPasso && (
-                <TouchableOpacity style={styles.specialBtn} onPress={handlePasso}>
+              {game.rules.passoEnabled && !human.usedPasso && !human.usedMesa && (
+                <TouchableOpacity
+                  style={[styles.specialBtn, !hasFiveDistinct(human) && styles.specialBtnDisabled]}
+                  onPress={() => hasFiveDistinct(human)
+                    ? handlePasso()
+                    : Alert.alert('Passo', 'Você precisa ter 5 faces diferentes para passar.')}
+                >
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>
               )}
@@ -279,6 +284,7 @@ const styles = StyleSheet.create({
   specialRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
   specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
+  specialBtnDisabled: { opacity: 0.4 },
   dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   tableDice: { color: '#c084fc', fontSize: 14, marginTop: 2 },
 });

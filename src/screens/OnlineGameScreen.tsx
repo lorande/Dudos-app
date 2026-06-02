@@ -198,8 +198,13 @@ export default function OnlineGameScreen({ navigation }: Props) {
 
             {/* Regras especiais */}
             <View style={styles.specialRow}>
-              {game.rules.passoEnabled && myDice.length === 5 && new Set(myDice).size === 5 && !myPlayer?.usedPasso && (
-                <TouchableOpacity style={styles.specialBtn} onPress={passo}>
+              {game.rules.passoEnabled && !myPlayer?.usedPasso && !myPlayer?.usedMesa && (
+                <TouchableOpacity
+                  style={[styles.specialBtn, !(myDice.length === 5 && new Set(myDice).size === 5) && styles.specialBtnDisabled]}
+                  onPress={() => (myDice.length === 5 && new Set(myDice).size === 5)
+                    ? passo()
+                    : Alert.alert('Passo', 'Você precisa ter 5 faces diferentes para passar.')}
+                >
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>
               )}
@@ -253,6 +258,7 @@ const styles = StyleSheet.create({
   tableDice: { color: '#c084fc', fontSize: 13, marginTop: 2 },
   specialRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
+  specialBtnDisabled: { opacity: 0.4 },
   specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
   dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
   myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },

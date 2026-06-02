@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { isSoundOn } from '../store/settingsStore';
 
 // Efeitos sonoros via expo-audio (substitui o antigo expo-av).
 // Para versão offline, troque as URLs por require('../../assets/sons/xxx.mp3').
@@ -41,6 +42,7 @@ function getPlayer(type: SoundType): AudioPlayer | null {
 export function useSoundAndHaptics() {
   const play = useCallback((type: SoundType) => {
     try {
+      if (!isSoundOn()) return; // som desligado nas configurações
       ensureAudioMode();
       const player = getPlayer(type);
       if (!player) return;

@@ -13,6 +13,7 @@ import OnlineGameScreen from '../screens/OnlineGameScreen';
 import OnlineResultScreen from '../screens/OnlineResultScreen';
 import TutorialScreen from '../screens/TutorialScreen';
 import RulesScreen from '../screens/RulesScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { RuleConfig } from '../../packages/game-core/src';
 
 export type RootStackParamList = {
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   OnlineResult: undefined;
   Tutorial: undefined;
   Rules: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +51,7 @@ export default function AppNavigator() {
         <Stack.Screen name="OnlineResult" component={OnlineResultScreen} options={{ title: 'Fim de Jogo', headerBackVisible: false }} />
         <Stack.Screen name="Tutorial" component={TutorialScreen} options={{ title: 'Tutorial' }} />
         <Stack.Screen name="Rules" component={RulesScreen} options={{ title: 'Regras' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

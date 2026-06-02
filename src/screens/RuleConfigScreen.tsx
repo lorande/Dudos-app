@@ -19,29 +19,19 @@ const TIMER_OPTIONS = [
 
 export default function RuleConfigScreen({ navigation, route }: Props) {
   const { mode } = route.params;
-  const { templates, loadTemplates, saveTemplate, deleteTemplate } = useGameStore();
+  const { templates, loadTemplates, deleteTemplate } = useGameStore();
 
   const [rules, setRules] = useState<RuleConfig>(DEFAULT_RULES);
   const [humanName, setHumanName] = useState('Jogador');
   const [botCount, setBotCount] = useState(1);
   const [playerCount, setPlayerCount] = useState(4); // modo físico
   const [playerNames, setPlayerNames] = useState<string[]>(['Jogador 1', 'Jogador 2', 'Jogador 3', 'Jogador 4']);
-  const [templateName, setTemplateName] = useState('');
-  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
 
   useEffect(() => { loadTemplates(); }, []);
 
   function applyTemplate(t: RuleTemplate) {
     // Mescla com os padrões para garantir todos os campos (toggles + punição).
     setRules({ ...DEFAULT_RULES, ...t.rules });
-    Alert.alert('Template aplicado', `Regras de "${t.name}" carregadas.`);
-  }
-
-  function handleSaveTemplate() {
-    if (!templateName.trim()) { Alert.alert('Nome obrigatório'); return; }
-    saveTemplate(templateName.trim(), rules);
-    setTemplateName('');
-    setShowSaveTemplate(false);
   }
 
   function handleStart() {
@@ -86,20 +76,6 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
               </TouchableOpacity>
             ))}
           </View>
-        </Section>
-
-        {/* Opções */}
-        <Section title="Regras">
-          <ToggleRow
-            label="Coringa ativo (★ conta para qualquer face)"
-            value={rules.wildEnabled}
-            onChange={(v) => setRules((r) => ({ ...r, wildEnabled: v }))}
-          />
-          <ToggleRow
-            label="Revelar dados entre rodadas"
-            value={rules.revealBetweenRounds}
-            onChange={(v) => setRules((r) => ({ ...r, revealBetweenRounds: v }))}
-          />
         </Section>
 
         <Section title="Regras Especiais">
@@ -193,28 +169,7 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
           </Section>
         )}
 
-        {/* Salvar template */}
-        <TouchableOpacity
-          style={styles.secondaryBtn}
-          onPress={() => setShowSaveTemplate((s) => !s)}
-        >
-          <Text style={styles.secondaryBtnText}>💾 Salvar como template</Text>
-        </TouchableOpacity>
-
-        {showSaveTemplate && (
-          <View style={styles.templateSave}>
-            <TextInput
-              style={styles.input}
-              value={templateName}
-              onChangeText={setTemplateName}
-              placeholder="Nome do template"
-              placeholderTextColor="#666"
-            />
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveTemplate}>
-              <Text style={styles.saveBtnText}>Salvar</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <Text style={styles.tip}>💡 Crie e gerencie templates de regras em Configurações (⚙️ na tela inicial).</Text>
 
         <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
           <Text style={styles.startBtnText}>Iniciar Jogo</Text>
@@ -245,6 +200,7 @@ function ToggleRow({ label, value, onChange }: { label: string; value: boolean; 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a0a2e' },
   scroll: { padding: 20, gap: 8 },
+  tip: { color: '#888', fontSize: 13, textAlign: 'center', paddingVertical: 8 },
   section: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, marginBottom: 12 },
   sectionTitle: { color: '#f5c518', fontSize: 14, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
