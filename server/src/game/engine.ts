@@ -169,10 +169,11 @@ export function applyDudo(state: ServerGameState, playerId: string): ServerGameS
   return finishRound(state, applyPenalty(state.players, reveal, state.rules), reveal);
 }
 
+// Todas as faces distintas, considerando mão + dados na mesa.
 export function hasFiveDistinct(player: ServerPlayer): boolean {
   const all = [...player.dice, ...player.tableDice];
-  if (all.length !== 5) return false;
-  return new Set(all).size === 5;
+  if (all.length < 2) return false;
+  return new Set(all).size === all.length;
 }
 
 export function applyPasso(state: ServerGameState, playerId: string): ServerGameState {
@@ -181,8 +182,8 @@ export function applyPasso(state: ServerGameState, playerId: string): ServerGame
   const player = state.players[state.currentPlayerIndex];
   if (player.id !== playerId) throw new Error('Não é sua vez');
   if (player.usedPasso) throw new Error('Passo já usado');
-  if (player.usedMesa) throw new Error('Mesa bloqueia o Passo');
-  // Blefe permitido: a distinção só é verificada se o Passo for dudado.
+  // Blefe permitido mesmo após a Mesa: a distinção (mão + mesa) só é
+  // verificada se o Passo for dudado.
   const players = state.players.map((p) => (p.id === playerId ? { ...p, usedPasso: true } : p));
   return { ...state, players, currentPlayerIndex: nextActiveIndex(state.players, state.currentPlayerIndex), pendingPasso: { playerId } };
 }

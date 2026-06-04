@@ -79,9 +79,12 @@ export default function PhysicalGameScreen({ navigation }: Props) {
             <View style={styles.diceRow}>
               {myDice.map((d, i) => <Text key={i} style={styles.die}>{DICE_FACE[d]}</Text>)}
             </View>
-            {myDice.length > 0 && new Set(myDice).size === myDice.length && (
+            {(() => {
+              const all = [...myDice, ...(myPlayer?.tableDice ?? [])];
+              return all.length >= 2 && new Set(all).size === all.length;
+            })() && (
               <View style={styles.distinctBox}>
-                <Text style={styles.distinctText}>✓ Suas faces são todas distintas (pode declarar Passo)</Text>
+                <Text style={styles.distinctText}>✓ Suas faces são todas distintas (mão + mesa) — pode declarar Passo</Text>
               </View>
             )}
           </View>

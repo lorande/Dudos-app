@@ -38,12 +38,12 @@ describe('paridade do motor (servidor)', () => {
     expect(after.lastReveal?.kind).toBe('passo');
     expect(after.lastReveal?.loserIds).toContain('b');
   });
-  it('mesa move dados e bloqueia passo', () => {
+  it('mesa move dados e Passo continua permitido', () => {
     let g = two();
-    g = { ...g, players: [{ ...g.players[0], dice: [6, 6, 2, 3, 4] }, g.players[1]] };
+    g = { ...g, players: [{ ...g.players[0], dice: [6, 6, 2, 3, 4] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
     g = applyMesa(g, 'a', [0, 1]);
     expect(g.players[0].tableDice).toEqual([6, 6]);
-    expect(() => applyPasso(g, 'a')).toThrow();
+    expect(() => applyPasso(g, 'a')).not.toThrow();
   });
   it('manual dudo penaliza o escolhido e reinicia a rodada (físico)', () => {
     let g = two();

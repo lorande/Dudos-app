@@ -206,7 +206,7 @@ export default function GameScreen({ navigation, route }: Props) {
             </View>
 
             <View style={styles.specialRow}>
-              {game.rules.passoEnabled && !human.usedPasso && !human.usedMesa && (
+              {game.rules.passoEnabled && !human.usedPasso && (
                 <TouchableOpacity style={styles.specialBtn} onPress={handlePasso}>
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>

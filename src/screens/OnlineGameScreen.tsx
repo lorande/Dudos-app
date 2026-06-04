@@ -212,7 +212,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
 
             {/* Regras especiais */}
             <View style={styles.specialRow}>
-              {game.rules.passoEnabled && !myPlayer?.usedPasso && !myPlayer?.usedMesa && (
+              {game.rules.passoEnabled && !myPlayer?.usedPasso && (
                 <TouchableOpacity style={styles.specialBtn} onPress={passo}>
                   <Text style={styles.specialBtnText}>Passo</Text>
                 </TouchableOpacity>

@@ -55,10 +55,11 @@ function finishRound(state: GameState, players: PlayerState[], reveal: RevealRes
   };
 }
 
+// Todas as faces distintas, considerando os dados na mão E os colocados na mesa.
 export function hasFiveDistinct(player: PlayerState): boolean {
   const all = [...player.dice, ...player.tableDice];
-  if (all.length !== 5) return false;
-  return new Set(all).size === 5;
+  if (all.length < 2) return false;
+  return new Set(all).size === all.length;
 }
 
 export function passo(state: GameState, playerId: string): GameState {
@@ -67,9 +68,9 @@ export function passo(state: GameState, playerId: string): GameState {
   const player = state.players[state.currentPlayerIndex];
   if (player.id !== playerId) throw new Error('Não é a vez deste jogador');
   if (player.usedPasso) throw new Error('Passo já usado nesta rodada');
-  if (player.usedMesa) throw new Error('Mesa usada bloqueia o Passo');
-  // O Passo é um blefe: pode ser declarado mesmo com faces repetidas.
-  // A distinção só é checada se outro jogador dudar o Passo.
+  // O Passo é um blefe: pode ser declarado mesmo após a Mesa e mesmo com
+  // faces repetidas. A distinção (dados na mão + na mesa) só é checada se
+  // outro jogador dudar o Passo.
 
   const players = state.players.map((p) =>
     p.id === playerId ? { ...p, usedPasso: true } : p

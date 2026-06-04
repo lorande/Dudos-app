@@ -231,14 +231,20 @@ describe('mesa', () => {
     expect(after.players[0].usedMesa).toBe(true);
     expect(after.currentPlayerIndex).toBe(0); // ainda é a vez de A (deve apostar)
   });
-  it('Mesa bloqueia Passo na mesma rodada', () => {
+  it('Passo continua permitido após a Mesa', () => {
     let g = init5(RULES5, [
       { id: 'a', name: 'A', isBot: false },
       { id: 'b', name: 'B', isBot: false },
     ]);
-    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]] };
-    g = mesa(g, 'a', []); // usa Mesa sem mostrar nada (re-sorteia tudo)
-    expect(() => passo5(g, 'a')).toThrow();
+    g = { ...g, players: [{ ...g.players[0], dice: [1, 2, 3, 4, 5] }, g.players[1]], currentBid: { quantity: 6, face: 3 } };
+    g = mesa(g, 'a', [0, 1]); // mostra 2 dados na mesa
+    expect(() => passo5(g, 'a')).not.toThrow();
+  });
+  it('distinção considera dados na mesa', () => {
+    const withTable: any = { id: 'a', name: 'A', dice: [4, 5, 6], tableDice: [2, 3], lives: 1, usedPasso: false, usedMesa: true, isBot: false, isEliminated: false };
+    const withRepeat: any = { id: 'b', name: 'B', dice: [4, 5, 6], tableDice: [4, 3], lives: 1, usedPasso: false, usedMesa: true, isBot: false, isEliminated: false };
+    expect(hasFiveDistinct(withTable)).toBe(true);   // 2,3,4,5,6 distintos
+    expect(hasFiveDistinct(withRepeat)).toBe(false);  // 4 repetido
   });
 });
 
