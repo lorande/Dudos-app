@@ -42,3 +42,6 @@ yarn-error.*
 
 # superpowers brainstorm transient files
 .superpowers/
+
+# Google Play service account key (NUNCA commitar)
+google-service-account.json
