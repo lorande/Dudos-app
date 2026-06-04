@@ -8,6 +8,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Bid } from '../../packages/game-core/src';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export default function AnimatedBidBanner({ bid }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -47,12 +51,12 @@ export default function AnimatedBidBanner({ bid }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   container: {
-    backgroundColor: '#2d1b4e',
-    borderRadius: 12,
+    backgroundColor: t.surface,
+    borderRadius: t.radius,
     padding: 16,
     alignItems: 'center',
   },
-  text: { color: '#fff', fontSize: 40, fontWeight: '900' },
+  text: { color: t.text, fontSize: 40, fontWeight: '900' },
 });

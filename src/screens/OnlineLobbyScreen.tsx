@@ -9,10 +9,14 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useOnlineGameStore } from '../store/onlineGameStore';
 import { DEFAULT_RULES } from '../../packages/game-core/src';
 import { useGameStore } from '../store/gameStore';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OnlineLobby'>;
 
 export default function OnlineLobbyScreen({ navigation, route }: Props) {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   const mode = route.params?.mode ?? 'online';
   const {
     roomCode, mySocketId, amHost, lobbyPlayers, pending, joinStatus, roomClosed, game, error,
@@ -63,7 +67,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator color="#f5c518" size="large" />
+          <ActivityIndicator color={theme.accent} size="large" />
           <Text style={styles.waitBig}>Aguardando aprovação do criador da sala…</Text>
           <TouchableOpacity style={styles.leaveBtn} onPress={() => { disconnect(); navigation.goBack(); }}>
             <Text style={styles.leaveBtnText}>Cancelar</Text>
@@ -169,7 +173,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
           value={name}
           onChangeText={setName}
           placeholder="Nome"
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.textMuted}
           maxLength={20}
         />
 
@@ -181,7 +185,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
               value={joinCode}
               onChangeText={(v) => setJoinCode(v.toUpperCase())}
               placeholder="XXXXXX"
-              placeholderTextColor="#666"
+              placeholderTextColor={theme.textMuted}
               maxLength={6}
               autoCapitalize="characters"
             />
@@ -228,7 +232,7 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
           }}
         >
           {loading
-            ? <ActivityIndicator color="#1a0a2e" />
+            ? <ActivityIndicator color={theme.bg} />
             : <Text style={styles.actionBtnText}>{tab === 'create' ? 'Criar Sala' : 'Pedir Entrada'}</Text>
           }
         </TouchableOpacity>
@@ -237,39 +241,39 @@ export default function OnlineLobbyScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   scroll: { padding: 24, gap: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 20 },
-  title: { color: '#f5c518', fontSize: 22, fontWeight: '900', textAlign: 'center' },
-  waitBig: { color: '#fff', fontSize: 18, textAlign: 'center' },
-  tabs: { flexDirection: 'row', backgroundColor: '#2d1b4e', borderRadius: 12, marginBottom: 8 },
-  tab: { flex: 1, padding: 14, alignItems: 'center', borderRadius: 12 },
-  tabActive: { backgroundColor: '#7c3aed' },
-  tabText: { color: '#aaa', fontSize: 15, fontWeight: '600' },
-  tabTextActive: { color: '#fff' },
-  label: { color: '#aaa', fontSize: 13, marginBottom: 4 },
-  tip: { color: '#888', fontSize: 13, lineHeight: 19, marginBottom: 4 },
-  input: { backgroundColor: '#2d1b4e', color: '#fff', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#4a2e7a', fontSize: 16 },
+  title: { color: t.accent, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  waitBig: { color: t.text, fontSize: 18, textAlign: 'center' },
+  tabs: { flexDirection: 'row', backgroundColor: t.surface, borderRadius: t.radius, marginBottom: 8 },
+  tab: { flex: 1, padding: 14, alignItems: 'center', borderRadius: t.radius },
+  tabActive: { backgroundColor: t.primary },
+  tabText: { color: t.textMuted, fontSize: 15, fontWeight: '600' },
+  tabTextActive: { color: t.text },
+  label: { color: t.textMuted, fontSize: 13, marginBottom: 4 },
+  tip: { color: t.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  input: { backgroundColor: t.surface, color: t.text, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: t.border, fontSize: 16 },
   codeInput: { fontSize: 28, fontWeight: '900', textAlign: 'center', letterSpacing: 8 },
   templateList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  templateChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#4a2e7a' },
-  templateChipActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  templateChipText: { color: '#fff', fontSize: 14 },
-  actionBtn: { backgroundColor: '#f5c518', borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 8 },
-  actionBtnText: { color: '#1a0a2e', fontSize: 18, fontWeight: '900' },
-  codeLabel: { color: '#aaa', fontSize: 14, textAlign: 'center' },
-  code: { color: '#f5c518', fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 10 },
-  hint: { color: '#666', fontSize: 13, textAlign: 'center', marginBottom: 8 },
-  sectionTitle: { color: '#f5c518', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
-  playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2d1b4e', borderRadius: 10, padding: 14, gap: 10 },
-  playerName: { flex: 1, color: '#fff', fontSize: 16 },
-  hostBadge: { color: '#f5c518', fontSize: 11, fontWeight: '700', borderWidth: 1, borderColor: '#f5c518', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  approve: { color: '#4ade80', fontSize: 14, fontWeight: '700' },
-  reject: { color: '#f87171', fontSize: 14, fontWeight: '700' },
-  startBtn: { backgroundColor: '#f5c518', borderRadius: 14, padding: 18, alignItems: 'center', marginTop: 8 },
-  startBtnText: { color: '#1a0a2e', fontSize: 18, fontWeight: '900' },
-  waitText: { color: '#666', fontSize: 15, textAlign: 'center', marginTop: 16 },
-  leaveBtn: { borderWidth: 1, borderColor: '#dc2626', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
-  leaveBtnText: { color: '#dc2626', fontSize: 15 },
+  templateChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: t.border },
+  templateChipActive: { backgroundColor: t.primary, borderColor: t.primary },
+  templateChipText: { color: t.text, fontSize: 14 },
+  actionBtn: { backgroundColor: t.accent, borderRadius: t.radius, padding: 18, alignItems: 'center', marginTop: 8 },
+  actionBtnText: { color: t.bg, fontSize: 18, fontWeight: '900' },
+  codeLabel: { color: t.textMuted, fontSize: 14, textAlign: 'center' },
+  code: { color: t.accent, fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 10 },
+  hint: { color: t.textMuted, fontSize: 13, textAlign: 'center', marginBottom: 8 },
+  sectionTitle: { color: t.accent, fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
+  playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: t.surface, borderRadius: 10, padding: 14, gap: 10 },
+  playerName: { flex: 1, color: t.text, fontSize: 16 },
+  hostBadge: { color: t.accent, fontSize: 11, fontWeight: '700', borderWidth: 1, borderColor: t.accent, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  approve: { color: t.success, fontSize: 14, fontWeight: '700' },
+  reject: { color: t.danger, fontSize: 14, fontWeight: '700' },
+  startBtn: { backgroundColor: t.accent, borderRadius: t.radius, padding: 18, alignItems: 'center', marginTop: 8 },
+  startBtnText: { color: t.bg, fontSize: 18, fontWeight: '900' },
+  waitText: { color: t.textMuted, fontSize: 15, textAlign: 'center', marginTop: 16 },
+  leaveBtn: { borderWidth: 1, borderColor: t.danger, borderRadius: t.radius, padding: 14, alignItems: 'center', marginTop: 16 },
+  leaveBtnText: { color: t.danger, fontSize: 15 },
 });

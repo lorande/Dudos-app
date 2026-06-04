@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,8 +8,8 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-
-const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+import Die from './Die';
+import { Face } from '../../packages/game-core/src';
 
 interface Props {
   face: number;
@@ -77,11 +76,7 @@ export default function AnimatedDie({ face, size = 40, animate = 'none', delay =
 
   return (
     <Animated.View style={animStyle}>
-      <Text style={[styles.die, { fontSize: size }]}>{DICE_FACE[face]}</Text>
+      <Die face={face as Face} size={size} />
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  die: { textAlign: 'center' },
-});

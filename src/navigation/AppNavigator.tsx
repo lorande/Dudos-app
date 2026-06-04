@@ -15,6 +15,7 @@ import TutorialScreen from '../screens/TutorialScreen';
 import RulesScreen from '../screens/RulesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import { RuleConfig } from '../../packages/game-core/src';
+import { useTheme } from '../store/settingsStore';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -34,11 +35,12 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+  const t = useTheme();
   return (
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Home"
-        screenOptions={{ headerStyle: { backgroundColor: '#1a0a2e' }, headerTintColor: '#fff' }}
+        screenOptions={{ headerStyle: { backgroundColor: t.surface }, headerTintColor: t.text }}
       >
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="RuleConfig" component={RuleConfigScreen} options={{ title: 'Configurar Regras' }} />

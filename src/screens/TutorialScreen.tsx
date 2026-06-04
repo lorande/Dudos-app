@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Tutorial'>;
 
@@ -40,6 +42,8 @@ const STEPS = [
 ];
 
 export default function TutorialScreen({ navigation }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const [step, setStep] = useState(0);
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -76,18 +80,18 @@ export default function TutorialScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
   emoji: { fontSize: 72 },
-  title: { color: '#f5c518', fontSize: 26, fontWeight: '900', textAlign: 'center' },
-  body: { color: '#ddd', fontSize: 16, lineHeight: 26, textAlign: 'center' },
+  title: { color: t.accent, fontSize: 26, fontWeight: '900', textAlign: 'center' },
+  body: { color: t.text, fontSize: 16, lineHeight: 26, textAlign: 'center' },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 16 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4a2e7a' },
-  dotActive: { backgroundColor: '#f5c518', width: 20 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: t.border },
+  dotActive: { backgroundColor: t.accent, width: 20 },
   nav: { flexDirection: 'row', gap: 10, paddingHorizontal: 24, paddingBottom: 32 },
-  backBtn: { flex: 1, borderWidth: 1, borderColor: '#4a2e7a', borderRadius: 12, padding: 16, alignItems: 'center' },
-  backBtnText: { color: '#aaa', fontSize: 16 },
-  nextBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 16, alignItems: 'center' },
-  nextBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  backBtn: { flex: 1, borderWidth: 1, borderColor: t.border, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  backBtnText: { color: t.textMuted, fontSize: 16 },
+  nextBtn: { backgroundColor: t.primary, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  nextBtnText: { color: t.text, fontSize: 16, fontWeight: '700' },
 });

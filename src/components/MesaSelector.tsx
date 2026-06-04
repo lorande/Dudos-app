@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { DICE_FACE, Face } from '../../packages/game-core/src';
+import { Face } from '../../packages/game-core/src';
+import Die from './Die';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 interface Props {
   visible: boolean;
@@ -10,6 +13,8 @@ interface Props {
 }
 
 export default function MesaSelector({ visible, dice, onCancel, onConfirm }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const [selected, setSelected] = useState<number[]>([]);
 
   function toggle(i: number) {
@@ -25,7 +30,7 @@ export default function MesaSelector({ visible, dice, onCancel, onConfirm }: Pro
           <View style={styles.diceRow}>
             {dice.map((d, i) => (
               <TouchableOpacity key={i} style={[styles.die, selected.includes(i) && styles.selected]} onPress={() => toggle(i)}>
-                <Text style={styles.dieText}>{DICE_FACE[d]}</Text>
+                <Die face={d} size={40} color={t.text} />
               </TouchableOpacity>
             ))}
           </View>
@@ -43,18 +48,18 @@ export default function MesaSelector({ visible, dice, onCancel, onConfirm }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  card: { backgroundColor: '#2d1b4e', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400 },
-  title: { color: '#f5c518', fontSize: 22, fontWeight: '900', textAlign: 'center' },
-  subtitle: { color: '#aaa', fontSize: 14, textAlign: 'center', marginVertical: 12 },
+  card: { backgroundColor: t.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 400 },
+  title: { color: t.accent, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  subtitle: { color: t.textMuted, fontSize: 14, textAlign: 'center', marginVertical: 12 },
   diceRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 16 },
-  die: { padding: 8, borderRadius: 10, borderWidth: 2, borderColor: '#4a2e7a' },
-  selected: { borderColor: '#f5c518', backgroundColor: '#3d2060' },
+  die: { padding: 8, borderRadius: 10, borderWidth: 2, borderColor: t.border },
+  selected: { borderColor: t.accent, backgroundColor: t.surfaceActive },
   dieText: { fontSize: 40 },
   actions: { flexDirection: 'row', gap: 10 },
-  cancel: { flex: 1, borderWidth: 1, borderColor: '#4a2e7a', borderRadius: 12, padding: 14, alignItems: 'center' },
-  cancelText: { color: '#aaa', fontSize: 15 },
-  confirm: { flex: 1, backgroundColor: '#7c3aed', borderRadius: 12, padding: 14, alignItems: 'center' },
-  confirmText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  cancel: { flex: 1, borderWidth: 1, borderColor: t.border, borderRadius: t.radius, padding: 14, alignItems: 'center' },
+  cancelText: { color: t.textMuted, fontSize: 15 },
+  confirm: { flex: 1, backgroundColor: t.primary, borderRadius: t.radius, padding: 14, alignItems: 'center' },
+  confirmText: { color: t.text, fontSize: 15, fontWeight: '700' },
 });

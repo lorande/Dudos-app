@@ -6,10 +6,14 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useGameStore } from '../store/gameStore';
 import { recordHumanWin } from '../bots/adaptiveBot';
 import { useSoundAndHaptics } from '../hooks/useSoundAndHaptics';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 export default function ResultScreen({ navigation }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const { game, resetGame } = useGameStore();
   const sfx = useSoundAndHaptics();
 
@@ -58,16 +62,16 @@ export default function ResultScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
   trophy: { fontSize: 80 },
-  result: { color: '#f5c518', fontSize: 32, fontWeight: '900', textAlign: 'center' },
-  ranking: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 20, width: '100%', gap: 8 },
-  rankingTitle: { color: '#aaa', fontSize: 14, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  result: { color: t.accent, fontSize: 32, fontWeight: '900', textAlign: 'center' },
+  ranking: { backgroundColor: t.surface, borderRadius: t.radius, padding: 20, width: '100%', gap: 8 },
+  rankingTitle: { color: t.textMuted, fontSize: 14, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rankPos: { color: '#f5c518', fontSize: 18, fontWeight: '900', width: 32 },
-  rankName: { color: '#fff', fontSize: 18 },
-  playAgainBtn: { backgroundColor: '#f5c518', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 40, marginTop: 8 },
-  playAgainText: { color: '#1a0a2e', fontSize: 18, fontWeight: '900' },
+  rankPos: { color: t.accent, fontSize: 18, fontWeight: '900', width: 32 },
+  rankName: { color: t.text, fontSize: 18 },
+  playAgainBtn: { backgroundColor: t.accent, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 40, marginTop: 8 },
+  playAgainText: { color: t.bg, fontSize: 18, fontWeight: '900' },
 });

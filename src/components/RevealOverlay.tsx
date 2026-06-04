@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { RevealResult, PlayerState, Face } from '../../packages/game-core/src';
 import AnimatedDie from './AnimatedDie';
 import { useSoundAndHaptics } from '../hooks/useSoundAndHaptics';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 const FACE_NAMES = ['', 'Coringa ★', 'Dois', 'Três', 'Quatro', 'Cinco', 'Seis'];
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export default function RevealOverlay({ reveal, players, palificoActive, onContinue, waitingFor }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const sfx = useSoundAndHaptics();
   const losers = players.filter((p) => reveal.loserIds.includes(p.id));
 
@@ -105,28 +109,28 @@ export default function RevealOverlay({ reveal, players, palificoActive, onConti
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  card: { backgroundColor: '#2d1b4e', borderRadius: 20, padding: 24, width: '100%', maxWidth: 400 },
-  title: { color: '#f5c518', fontSize: 24, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
-  bidText: { color: '#aaa', fontSize: 15, textAlign: 'center', marginBottom: 16 },
-  passoOk: { color: '#4ade80', fontSize: 17, fontWeight: '800' },
+  card: { backgroundColor: t.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 400 },
+  title: { color: t.accent, fontSize: 24, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
+  bidText: { color: t.textMuted, fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  passoOk: { color: t.success, fontSize: 17, fontWeight: '800' },
   faceList: { gap: 6, marginBottom: 12 },
   faceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
-  faceRowHighlight: { backgroundColor: '#3d2060', borderWidth: 1, borderColor: '#7c3aed' },
+  faceRowHighlight: { backgroundColor: t.surfaceActive, borderWidth: 1, borderColor: t.primary },
   faceDie: { fontSize: 26, width: 36 },
-  faceName: { color: '#ccc', fontSize: 14, flex: 1 },
-  faceCount: { color: '#aaa', fontSize: 16, fontWeight: '700' },
-  faceCountHighlight: { color: '#f5c518', fontSize: 20 },
-  wildRow: { backgroundColor: '#1e1040', borderRadius: 8, padding: 10, marginBottom: 10 },
-  wildLabel: { color: '#c084fc', fontSize: 12 },
-  wildValue: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  faceName: { color: t.textMuted, fontSize: 14, flex: 1 },
+  faceCount: { color: t.textMuted, fontSize: 16, fontWeight: '700' },
+  faceCountHighlight: { color: t.accent, fontSize: 20 },
+  wildRow: { backgroundColor: t.surfaceActive, borderRadius: 8, padding: 10, marginBottom: 10 },
+  wildLabel: { color: t.accent, fontSize: 12 },
+  wildValue: { color: t.text, fontSize: 18, fontWeight: '700' },
   verdict: { borderRadius: 10, padding: 14, marginBottom: 10, alignItems: 'center' },
-  verdictTrue: { backgroundColor: '#14532d' },
-  verdictFalse: { backgroundColor: '#450a0a' },
-  verdictText: { color: '#fff', fontSize: 15, fontWeight: '700', textAlign: 'center' },
-  loserText: { color: '#fbbf24', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
-  waitingText: { color: '#94a3b8', fontSize: 15, textAlign: 'center', paddingVertical: 14 },
-  continueBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 16, alignItems: 'center' },
-  continueBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  verdictTrue: { backgroundColor: t.surfaceActive },
+  verdictFalse: { backgroundColor: t.surface },
+  verdictText: { color: t.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+  loserText: { color: t.accent, fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
+  waitingText: { color: t.textMuted, fontSize: 15, textAlign: 'center', paddingVertical: 14 },
+  continueBtn: { backgroundColor: t.primary, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  continueBtnText: { color: t.text, fontSize: 17, fontWeight: '700' },
 });

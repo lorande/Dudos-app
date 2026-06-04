@@ -10,12 +10,17 @@ import { useOnlineGameStore } from '../store/onlineGameStore';
 import { Face, Bid, availableBidFaces, minBidQuantity } from '../../packages/game-core/src';
 import RevealOverlay from '../components/RevealOverlay';
 import MesaSelector from '../components/MesaSelector';
+import Die from '../components/Die';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OnlineGame'>;
 
 const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 export default function OnlineGameScreen({ navigation }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const { game, mySocketId, myDice, roomClosed, bid, dudo, passo, dudoPasso, mesa, nextRound, closeRoom, disconnect } = useOnlineGameStore();
 
   const [bidQty, setBidQty] = useState(1);
@@ -111,7 +116,11 @@ export default function OnlineGameScreen({ navigation }: Props) {
                 : <Text style={styles.playerStat}>🎲×{p.diceCount}</Text>
               }
               {p.tableDice.length > 0 && (
-                <Text style={styles.tableDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
+                <View style={styles.tableDice}>
+                  {p.tableDice.map((d, i) => (
+                    <Die key={i} face={d} size={13} color={t.accent} />
+                  ))}
+                </View>
               )}
             </View>
           ))}
@@ -122,7 +131,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
           <View style={styles.myDice}>
             <Text style={styles.myDiceLabel}>Seus dados</Text>
             <View style={styles.diceRow}>
-              {myDice.map((d, i) => <Text key={i} style={styles.die}>{DICE_FACE[d]}</Text>)}
+              {myDice.map((d, i) => <Die key={i} face={d} size={40} color={t.text} />)}
             </View>
           </View>
         )}
@@ -149,7 +158,11 @@ export default function OnlineGameScreen({ navigation }: Props) {
             {activePlayers.filter((p) => p.tableDice.length > 0).map((p) => (
               <View key={p.id} style={styles.mesaPanelRow}>
                 <Text style={styles.mesaPanelName}>{p.name}</Text>
-                <Text style={styles.mesaPanelDice}>{p.tableDice.map((d) => DICE_FACE[d]).join(' ')}</Text>
+                <View style={styles.mesaPanelDice}>
+                  {p.tableDice.map((d, i) => (
+                    <Die key={i} face={d} size={32} color={t.text} />
+                  ))}
+                </View>
               </View>
             ))}
           </View>
@@ -194,7 +207,7 @@ export default function OnlineGameScreen({ navigation }: Props) {
                   style={[styles.faceBtn, bidFace === f && styles.faceBtnActive]}
                   onPress={() => setBidFace(f)}
                 >
-                  <Text style={styles.faceBtnText}>{DICE_FACE[f]}</Text>
+                  <Die face={f} size={28} color={t.text} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -264,58 +277,58 @@ export default function OnlineGameScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   scroll: { padding: 16, gap: 12 },
-  roomBadge: { backgroundColor: '#2d1b4e', borderRadius: 8, padding: 8, alignItems: 'center' },
-  roomBadgeText: { color: '#888', fontSize: 13 },
+  roomBadge: { backgroundColor: t.surface, borderRadius: 8, padding: 8, alignItems: 'center' },
+  roomBadgeText: { color: t.textMuted, fontSize: 13 },
   playersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  playerChip: { backgroundColor: '#2d1b4e', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#4a2e7a', minWidth: 80 },
-  playerChipActive: { borderColor: '#f5c518', backgroundColor: '#3d2060' },
-  playerName: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
-  playerStat: { color: '#aaa', fontSize: 11, marginTop: 2 },
-  tableDice: { color: '#c084fc', fontSize: 13, marginTop: 2 },
+  playerChip: { backgroundColor: t.surface, borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: t.border, minWidth: 80 },
+  playerChipActive: { borderColor: t.accent, backgroundColor: t.surfaceActive },
+  playerName: { color: t.text, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  playerStat: { color: t.textMuted, fontSize: 11, marginTop: 2 },
+  tableDice: { flexDirection: 'row', gap: 3, marginTop: 2 },
   specialRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  specialBtn: { flex: 1, borderWidth: 1, borderColor: '#c084fc', borderRadius: 12, padding: 12, alignItems: 'center' },
+  specialBtn: { flex: 1, borderWidth: 1, borderColor: t.accent, borderRadius: t.radius, padding: 12, alignItems: 'center' },
   specialBtnDisabled: { opacity: 0.4 },
-  specialBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
-  leaveBtn: { borderWidth: 1, borderColor: '#dc2626', borderRadius: 12, padding: 12, alignItems: 'center', marginTop: 12 },
-  leaveBtnText: { color: '#dc2626', fontSize: 15 },
-  dudoPassoBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
-  myDice: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16 },
-  myDiceLabel: { color: '#f5c518', fontSize: 13, fontWeight: '700', marginBottom: 10 },
+  specialBtnText: { color: t.accent, fontSize: 15, fontWeight: '700' },
+  leaveBtn: { borderWidth: 1, borderColor: t.danger, borderRadius: t.radius, padding: 12, alignItems: 'center', marginTop: 12 },
+  leaveBtnText: { color: t.danger, fontSize: 15 },
+  dudoPassoBtn: { backgroundColor: t.danger, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  myDice: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16 },
+  myDiceLabel: { color: t.accent, fontSize: 13, fontWeight: '700', marginBottom: 10 },
   diceRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   die: { fontSize: 40 },
-  currentBid: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, alignItems: 'center' },
-  currentBidLabel: { color: '#aaa', fontSize: 13 },
-  currentBidValue: { color: '#fff', fontSize: 36, fontWeight: '900', marginTop: 4 },
-  currentBidNone: { color: '#555', fontSize: 18, marginTop: 4 },
-  palificoBanner: { backgroundColor: '#3b0764', borderRadius: 8, padding: 10, alignItems: 'center' },
-  palificoText: { color: '#c084fc', fontSize: 13, fontWeight: '700' },
-  mesaPanel: { backgroundColor: '#1e1040', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#c084fc' },
-  mesaPanelTitle: { color: '#c084fc', fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  currentBid: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  currentBidLabel: { color: t.textMuted, fontSize: 13 },
+  currentBidValue: { color: t.text, fontSize: 36, fontWeight: '900', marginTop: 4 },
+  currentBidNone: { color: t.textMuted, fontSize: 18, marginTop: 4 },
+  palificoBanner: { backgroundColor: t.surfaceActive, borderRadius: 8, padding: 10, alignItems: 'center' },
+  palificoText: { color: t.accent, fontSize: 13, fontWeight: '700' },
+  mesaPanel: { backgroundColor: t.surface, borderRadius: t.radius, padding: 14, borderWidth: 1, borderColor: t.accent },
+  mesaPanelTitle: { color: t.accent, fontSize: 14, fontWeight: '800', marginBottom: 8 },
   mesaPanelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
-  mesaPanelName: { color: '#fff', fontSize: 14 },
-  mesaPanelDice: { fontSize: 32 },
-  waitBanner: { backgroundColor: '#1e293b', borderRadius: 8, padding: 14, alignItems: 'center' },
-  waitText: { color: '#94a3b8', fontSize: 16 },
-  eliminatedBanner: { backgroundColor: '#450a0a', borderRadius: 8, padding: 14, alignItems: 'center' },
-  eliminatedText: { color: '#fca5a5', fontSize: 15 },
-  actions: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, gap: 12 },
-  actionLabel: { color: '#f5c518', fontSize: 14, fontWeight: '700' },
+  mesaPanelName: { color: t.text, fontSize: 14 },
+  mesaPanelDice: { flexDirection: 'row', gap: 6 },
+  waitBanner: { backgroundColor: t.surface, borderRadius: 8, padding: 14, alignItems: 'center' },
+  waitText: { color: t.textMuted, fontSize: 16 },
+  eliminatedBanner: { backgroundColor: t.surface, borderRadius: 8, padding: 14, alignItems: 'center' },
+  eliminatedText: { color: t.danger, fontSize: 15 },
+  actions: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16, gap: 12 },
+  actionLabel: { color: t.accent, fontSize: 14, fontWeight: '700' },
   pickerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pickerLabel: { color: '#aaa', fontSize: 14 },
+  pickerLabel: { color: t.textMuted, fontSize: 14 },
   pickerButtons: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  pickerBtn: { backgroundColor: '#4a2e7a', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  pickerBtnText: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  pickerValue: { color: '#fff', fontSize: 22, fontWeight: '900', minWidth: 32, textAlign: 'center' },
+  pickerBtn: { backgroundColor: t.border, borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  pickerBtnText: { color: t.text, fontSize: 20, fontWeight: '700' },
+  pickerValue: { color: t.text, fontSize: 22, fontWeight: '900', minWidth: 32, textAlign: 'center' },
   facePicker: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  faceBtn: { padding: 6, borderRadius: 8, borderWidth: 1, borderColor: '#4a2e7a' },
-  faceBtnActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  faceBtn: { padding: 6, borderRadius: 8, borderWidth: 1, borderColor: t.border },
+  faceBtnActive: { backgroundColor: t.primary, borderColor: t.primary },
   faceBtnText: { fontSize: 28 },
   actionButtons: { flexDirection: 'row', gap: 10 },
-  bidBtn: { flex: 1, backgroundColor: '#7c3aed', borderRadius: 12, padding: 16, alignItems: 'center' },
-  bidBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  dudoBtn: { flex: 1, backgroundColor: '#dc2626', borderRadius: 12, padding: 16, alignItems: 'center' },
-  dudoBtnText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  bidBtn: { flex: 1, backgroundColor: t.primary, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  bidBtnText: { color: t.text, fontSize: 16, fontWeight: '700' },
+  dudoBtn: { flex: 1, backgroundColor: t.danger, borderRadius: t.radius, padding: 16, alignItems: 'center' },
+  dudoBtnText: { color: t.text, fontSize: 18, fontWeight: '900' },
 });

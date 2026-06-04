@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 const GENERAL = [
   { title: '🎯 Objetivo', body: 'Ser o último jogador com vidas ou dados restantes.' },
@@ -19,6 +21,8 @@ const SPECIAL = [
 ];
 
 export default function RulesScreen() {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const [open, setOpen] = useState<string | null>(null);
 
   const renderSection = (s: { title: string; body: string }, key: string) => (
@@ -52,16 +56,16 @@ export default function RulesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   scroll: { padding: 20, gap: 8 },
-  header: { color: '#f5c518', fontSize: 24, fontWeight: '900', marginBottom: 8 },
-  section: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, gap: 8 },
+  header: { color: t.accent, fontSize: 24, fontWeight: '900', marginBottom: 8 },
+  section: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16, gap: 8 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  chevron: { color: '#7c3aed', fontSize: 14 },
-  sectionBody: { color: '#ccc', fontSize: 15, lineHeight: 24 },
+  sectionTitle: { color: t.text, fontSize: 16, fontWeight: '700' },
+  chevron: { color: t.primary, fontSize: 14 },
+  sectionBody: { color: t.text, fontSize: 15, lineHeight: 24 },
   blockHeader: { marginTop: 16, marginBottom: 4, paddingHorizontal: 4 },
-  blockHeaderText: { color: '#c084fc', fontSize: 18, fontWeight: '900' },
-  blockHeaderSub: { color: '#888', fontSize: 13, marginTop: 2 },
+  blockHeaderText: { color: t.accent, fontSize: 18, fontWeight: '900' },
+  blockHeaderSub: { color: t.textMuted, fontSize: 13, marginTop: 2 },
 });

@@ -8,6 +8,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { DEFAULT_RULES, RuleConfig } from '../../packages/game-core/src';
 import { useGameStore, RuleTemplate } from '../store/gameStore';
+import { useTheme } from '../store/settingsStore';
+import { Theme } from '../theme/themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RuleConfig'>;
 
@@ -18,6 +20,8 @@ const TIMER_OPTIONS = [
 ];
 
 export default function RuleConfigScreen({ navigation, route }: Props) {
+  const t = useTheme();
+  const styles = makeStyles(t);
   const { mode } = route.params;
   const { templates, loadTemplates, deleteTemplate } = useGameStore();
 
@@ -29,9 +33,9 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
 
   useEffect(() => { loadTemplates(); }, []);
 
-  function applyTemplate(t: RuleTemplate) {
+  function applyTemplate(tpl: RuleTemplate) {
     // Mescla com os padrões para garantir todos os campos (toggles + punição).
-    setRules({ ...DEFAULT_RULES, ...t.rules });
+    setRules({ ...DEFAULT_RULES, ...tpl.rules });
   }
 
   function handleStart() {
@@ -46,14 +50,14 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
 
         {/* Templates */}
         {templates.length > 0 && (
-          <Section title="Templates Salvos">
-            {templates.map((t) => (
-              <View key={t.id} style={styles.templateRow}>
-                <Text style={styles.templateName}>{t.name}</Text>
-                <TouchableOpacity style={styles.applyBtn} onPress={() => applyTemplate(t)}>
+          <Section t={t} title="Templates Salvos">
+            {templates.map((tpl) => (
+              <View key={tpl.id} style={styles.templateRow}>
+                <Text style={styles.templateName}>{tpl.name}</Text>
+                <TouchableOpacity style={styles.applyBtn} onPress={() => applyTemplate(tpl)}>
                   <Text style={styles.applyBtnText}>Aplicar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteTemplate(t.id)}>
+                <TouchableOpacity onPress={() => deleteTemplate(tpl.id)}>
                   <Text style={styles.deleteBtn}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -62,7 +66,7 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
         )}
 
         {/* Modo de punição */}
-        <Section title="Modo de Punição">
+        <Section t={t} title="Modo de Punição">
           <View style={styles.row}>
             {(['lives', 'dice'] as const).map((m) => (
               <TouchableOpacity
@@ -78,18 +82,21 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
           </View>
         </Section>
 
-        <Section title="Regras Especiais">
+        <Section t={t} title="Regras Especiais">
           <ToggleRow
+            t={t}
             label="Palafico (1 dado → rodada sem coringa)"
             value={rules.palificoEnabled}
             onChange={(v) => setRules((r) => ({ ...r, palificoEnabled: v }))}
           />
           <ToggleRow
+            t={t}
             label="Passo (pular a vez com 5 dados distintos)"
             value={rules.passoEnabled}
             onChange={(v) => setRules((r) => ({ ...r, passoEnabled: v }))}
           />
           <ToggleRow
+            t={t}
             label="Mesa (revelar dados e re-sortear)"
             value={rules.mesaEnabled}
             onChange={(v) => setRules((r) => ({ ...r, mesaEnabled: v }))}
@@ -97,7 +104,7 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
         </Section>
 
         {/* Timer */}
-        <Section title="Timer por jogada">
+        <Section t={t} title="Timer por jogada">
           <View style={styles.row}>
             {TIMER_OPTIONS.map((opt) => (
               <TouchableOpacity
@@ -115,14 +122,14 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
 
         {/* Jogadores */}
         {mode === 'local' && (
-          <Section title="Jogadores">
+          <Section t={t} title="Jogadores">
             <Text style={styles.label}>Seu nome</Text>
             <TextInput
               style={styles.input}
               value={humanName}
               onChangeText={setHumanName}
               placeholder="Nome"
-              placeholderTextColor="#666"
+              placeholderTextColor={t.textMuted}
             />
             <Text style={styles.label}>Número de bots: {botCount}</Text>
             <View style={styles.row}>
@@ -140,7 +147,7 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
         )}
 
         {mode === 'physical' && (
-          <Section title="Jogadores">
+          <Section t={t} title="Jogadores">
             <Text style={styles.label}>Número de jogadores: {playerCount}</Text>
             <View style={styles.row}>
               {[2, 3, 4, 5, 6, 7, 8].map((n) => (
@@ -163,7 +170,7 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
                 value={name}
                 onChangeText={(v) => setPlayerNames((arr) => arr.map((a, j) => (j === i ? v : a)))}
                 placeholder={`Jogador ${i + 1}`}
-                placeholderTextColor="#666"
+                placeholderTextColor={t.textMuted}
               />
             ))}
           </Section>
@@ -179,7 +186,8 @@ export default function RuleConfigScreen({ navigation, route }: Props) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ t, title, children }: { t: Theme; title: string; children: React.ReactNode }) {
+  const styles = makeStyles(t);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -188,40 +196,41 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+function ToggleRow({ t, label, value, onChange }: { t: Theme; label: string; value: boolean; onChange: (v: boolean) => void }) {
+  const styles = makeStyles(t);
   return (
     <View style={styles.toggleRow}>
       <Text style={styles.toggleLabel}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: '#7c3aed' }} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: t.primary }} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0a2e' },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg },
   scroll: { padding: 20, gap: 8 },
-  tip: { color: '#888', fontSize: 13, textAlign: 'center', paddingVertical: 8 },
-  section: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, marginBottom: 12 },
-  sectionTitle: { color: '#f5c518', fontSize: 14, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  tip: { color: t.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 8 },
+  section: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16, marginBottom: 12 },
+  sectionTitle: { color: t.accent, fontSize: 14, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#4a2e7a' },
-  chipActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  chipText: { color: '#aaa', fontSize: 14 },
-  chipTextActive: { color: '#fff', fontWeight: '700' },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: t.border },
+  chipActive: { backgroundColor: t.primary, borderColor: t.primary },
+  chipText: { color: t.textMuted, fontSize: 14 },
+  chipTextActive: { color: t.text, fontWeight: '700' },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
-  toggleLabel: { color: '#ddd', fontSize: 14, flex: 1, marginRight: 12 },
-  label: { color: '#aaa', fontSize: 13, marginBottom: 8, marginTop: 4 },
-  input: { backgroundColor: '#1a0a2e', color: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1, borderColor: '#4a2e7a' },
-  templateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: '#1a0a2e', borderRadius: 8, padding: 10, gap: 10 },
-  templateName: { color: '#fff', fontSize: 15, flex: 1 },
-  applyBtn: { backgroundColor: '#7c3aed', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  applyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  deleteBtn: { color: '#f87171', fontSize: 18, paddingHorizontal: 8 },
-  secondaryBtn: { borderWidth: 1, borderColor: '#4a2e7a', borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 8 },
-  secondaryBtnText: { color: '#aaa', fontSize: 15 },
-  templateSave: { backgroundColor: '#2d1b4e', borderRadius: 12, padding: 16, marginBottom: 8 },
-  saveBtn: { backgroundColor: '#7c3aed', borderRadius: 8, padding: 12, alignItems: 'center' },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  startBtn: { backgroundColor: '#f5c518', borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 8, marginBottom: 32 },
-  startBtnText: { color: '#1a0a2e', fontSize: 20, fontWeight: '900' },
+  toggleLabel: { color: t.text, fontSize: 14, flex: 1, marginRight: 12 },
+  label: { color: t.textMuted, fontSize: 13, marginBottom: 8, marginTop: 4 },
+  input: { backgroundColor: t.bg, color: t.text, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8, borderWidth: 1, borderColor: t.border },
+  templateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: t.bg, borderRadius: 8, padding: 10, gap: 10 },
+  templateName: { color: t.text, fontSize: 15, flex: 1 },
+  applyBtn: { backgroundColor: t.primary, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
+  applyBtnText: { color: t.text, fontSize: 14, fontWeight: '700' },
+  deleteBtn: { color: t.danger, fontSize: 18, paddingHorizontal: 8 },
+  secondaryBtn: { borderWidth: 1, borderColor: t.border, borderRadius: t.radius, padding: 14, alignItems: 'center', marginBottom: 8 },
+  secondaryBtnText: { color: t.textMuted, fontSize: 15 },
+  templateSave: { backgroundColor: t.surface, borderRadius: t.radius, padding: 16, marginBottom: 8 },
+  saveBtn: { backgroundColor: t.primary, borderRadius: 8, padding: 12, alignItems: 'center' },
+  saveBtnText: { color: t.text, fontWeight: '700', fontSize: 15 },
+  startBtn: { backgroundColor: t.accent, borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 8, marginBottom: 32 },
+  startBtnText: { color: t.bg, fontSize: 20, fontWeight: '900' },
 });
