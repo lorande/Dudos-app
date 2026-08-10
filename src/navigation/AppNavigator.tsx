@@ -48,7 +48,11 @@ export default function AppNavigator() {
         <Stack.Screen name="PhysicalGame" component={PhysicalGameScreen} options={{ title: 'Modo Físico', headerBackVisible: false }} />
         <Stack.Screen name="Reveal" component={RevealScreen} options={{ title: 'Resultado' }} />
         <Stack.Screen name="Result" component={ResultScreen} options={{ title: 'Fim de Jogo', headerBackVisible: false }} />
-        <Stack.Screen name="OnlineLobby" component={OnlineLobbyScreen} options={{ title: 'Jogar Online' }} />
+        <Stack.Screen
+          name="OnlineLobby"
+          component={OnlineLobbyScreen}
+          options={({ route }) => ({ title: route.params?.mode === 'physical' ? 'Modo Físico' : 'Jogar Online' })}
+        />
         <Stack.Screen name="OnlineGame" component={OnlineGameScreen} options={{ title: 'Dudos Online', headerBackVisible: false }} />
         <Stack.Screen name="OnlineResult" component={OnlineResultScreen} options={{ title: 'Fim de Jogo', headerBackVisible: false }} />
         <Stack.Screen name="Tutorial" component={TutorialScreen} options={{ title: 'Tutorial' }} />
