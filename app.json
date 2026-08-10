@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dudos",
     "slug": "dudos-app",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "com.dudos.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#1a0a2e",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,7 +36,12 @@
       ]
     },
     "plugins": [
-      ["expo-audio", { "microphonePermission": false }]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,6 +51,10 @@
         "projectId": "e74b22fd-7d35-46fe-9170-e1eb2b3973b3"
       }
     },
-    "owner": "lorande"
+    "owner": "lorande",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/e74b22fd-7d35-46fe-9170-e1eb2b3973b3"
+    }
   }
 }

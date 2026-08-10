@@ -8,19 +8,24 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_SERVER_URL": "http://localhost:3001"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
-      "android": { "buildType": "apk" },
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.onrender.com"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "env": {
         "EXPO_PUBLIC_SERVER_URL": "https://dudos-server.onrender.com"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
